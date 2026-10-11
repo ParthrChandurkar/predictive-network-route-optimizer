@@ -1,0 +1,87 @@
+{
+  "phase": "phase-0-synthetic-baseline",
+  "dataset": {
+    "samples": 1700,
+    "random_state": 42,
+    "failure_rate": 0.3559
+  },
+  "model": {
+    "accuracy": 0.8118,
+    "precision": 0.7478,
+    "recall": 0.7107,
+    "f1": 0.7288,
+    "feature_importance": {
+      "bandwidth": 0.2943,
+      "latency": 0.2482,
+      "packet_loss": 0.3092,
+      "traffic_load": 0.1483
+    }
+  },
+  "routing": {
+    "source": "R1",
+    "destination": "R8",
+    "penalty": 200.0,
+    "results": [
+      {
+        "algorithm": "Traditional Dijkstra",
+        "found": true,
+        "path_str": "R1 \u2192 R2 \u2192 R4 \u2192 R7 \u2192 R8",
+        "hops": 4,
+        "dist_cost": 53,
+        "algo_cost": 53,
+        "risky_links": 0,
+        "avg_risk": 0.007
+      },
+      {
+        "algorithm": "AI-Enhanced Dijkstra",
+        "found": true,
+        "path_str": "R1 \u2192 R2 \u2192 R4 \u2192 R7 \u2192 R8",
+        "hops": 4,
+        "dist_cost": 53,
+        "algo_cost": 58.6,
+        "risky_links": 0,
+        "avg_risk": 0.007
+      },
+      {
+        "algorithm": "Bellman-Ford",
+        "found": true,
+        "path_str": "R1 \u2192 R2 \u2192 R4 \u2192 R7 \u2192 R8",
+        "hops": 4,
+        "dist_cost": 53,
+        "algo_cost": 53,
+        "risky_links": 0,
+        "avg_risk": 0.007
+      },
+      {
+        "algorithm": "AI Bellman-Ford",
+        "found": true,
+        "path_str": "R1 \u2192 R2 \u2192 R4 \u2192 R7 \u2192 R8",
+        "hops": 4,
+        "dist_cost": 53,
+        "algo_cost": 58.6,
+        "risky_links": 0,
+        "avg_risk": 0.007
+      },
+      {
+        "algorithm": "Floyd-Warshall",
+        "found": true,
+        "path_str": "R1 \u2192 R2 \u2192 R4 \u2192 R7 \u2192 R8",
+        "hops": 4,
+        "dist_cost": 53,
+        "algo_cost": 53,
+        "risky_links": 0,
+        "avg_risk": 0.007
+      },
+      {
+        "algorithm": "AI Floyd-Warshall",
+        "found": true,
+        "path_str": "R1 \u2192 R2 \u2192 R4 \u2192 R7 \u2192 R8",
+        "hops": 4,
+        "dist_cost": 53,
+        "algo_cost": 58.6,
+        "risky_links": 0,
+        "avg_risk": 0.007
+      }
+    ]
+  }
+}

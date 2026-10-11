@@ -41,6 +41,8 @@ The Kaggle data is not bundled in this repository. Download access and usage rem
 
 The next version will focus on a validated telemetry pipeline, time-aware ML evaluation, and measurable risk-aware routing experiments. Further implementation details will be documented as each rebuild milestone is completed.
 
+Phase 0 stabilization is complete: project settings are centralized, training data is validated, model artifacts are written safely, regression coverage has been expanded, and a reproducible synthetic baseline is stored in `reports/phase0_baseline.json`.
+
 ## Tech Stack
 
 - Python
@@ -92,9 +94,10 @@ Streamlit normally serves the application at `http://localhost:8501`.
 
 ```bash
 python -m unittest discover -s tests
+python baseline.py
 ```
 
-The tests cover failed-link exclusion, random failure selection, and restoration of graph state after simulations.
+The tests cover dataset reproducibility, model persistence, topology mutation, routing consistency, failed-link exclusion, and simulation restoration.
 
 ## Current Version Limitations
 

@@ -8,10 +8,14 @@ import networkx as nx
 import numpy as np
 import time
 
-PENALTY_DEFAULT = 200
+from settings import DEFAULT_ROUTE_PENALTY
+
+PENALTY_DEFAULT = DEFAULT_ROUTE_PENALTY
 
 
 def compute_ai_weights(G: nx.Graph, penalty: float = PENALTY_DEFAULT):
+    if penalty < 0:
+        raise ValueError("penalty must be non-negative")
     for u, v, data in G.edges(data=True):
         if data.get("failed", False):
             G[u][v]["ai_weight"] = 1e9

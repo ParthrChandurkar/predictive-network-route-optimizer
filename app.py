@@ -34,7 +34,7 @@ hr{border-color:#1e293b;}
 </style>
 """, unsafe_allow_html=True)
 
-from data_generator  import generate_network_dataset, save_dataset
+from data_generator  import save_dataset
 from model           import train_model, load_model, predict_link, predict_graph_edges
 from network_builder import (build_default_topology, add_router, remove_router,
                               add_link, remove_link, update_link, set_link_failed,
@@ -188,8 +188,7 @@ with t_model:
         n_samples = st.slider("Dataset size", 400, 2000, 1700, 100)
         if st.button("🚀 Generate Data & Train", use_container_width=True):
             with st.spinner("Generating dataset…"):
-                df = generate_network_dataset(n_samples=n_samples)
-                save_dataset("network_data.csv", n_samples=n_samples)
+                df = save_dataset(n_samples=n_samples)
                 st.session_state.df_train = df
             with st.spinner("Training RandomForest…"):
                 mdl, scl, mtr = train_model(df)
