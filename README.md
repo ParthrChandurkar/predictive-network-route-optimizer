@@ -1,6 +1,8 @@
 # AI-Based Network Route Optimizer
 
-A Streamlit application for comparing conventional shortest-path routing with failure-aware routing. It combines NetworkX graph algorithms, synthetic network telemetry, a Random Forest failure model, stress simulation, and Plotly visualizations.
+A Streamlit application for comparing conventional shortest-path routing with ML-assisted, risk-aware routing. The current version combines NetworkX graph algorithms, synthetic network telemetry, a Random Forest baseline, stress simulation, and Plotly visualizations.
+
+> **Rebuild in progress:** The project is being redesigned around real network telemetry and time-aware degradation prediction. The existing synthetic workflow remains available as a reproducible demonstration while the new data pipeline is developed.
 
 ## Overview
 
@@ -16,7 +18,7 @@ A higher penalty makes the routing algorithms prefer lower-risk links, even when
 
 - Interactive topology creation and editing
 - Dijkstra, Bellman-Ford, and Floyd-Warshall comparisons
-- Random Forest link-failure prediction
+- Random Forest risk prediction using the current synthetic baseline
 - Traffic, latency, packet-loss, and random-failure simulation
 - Traditional and failure-aware path comparison
 - Route risk, model metric, feature importance, and network-health charts
@@ -26,6 +28,18 @@ A higher penalty makes the routing algorithms prefer lower-risk links, even when
 `network_builder.py` creates and updates the NetworkX topology. `model.py` trains or loads the model and assigns risk values to links. `routing.py` calculates conventional and failure-aware paths. `simulation.py` applies temporary network conditions, while `analytics.py` builds the Plotly figures used by `app.py`.
 
 The included `network_data.csv` is synthetic and contains bandwidth, latency, packet loss, traffic load, and a binary failure label. Saved model and scaler artifacts are provided for local use.
+
+## Rebuild Dataset
+
+The rebuild will begin with Kaggle's [Anomaly Detection in 4G Cellular Networks](https://www.kaggle.com/competitions/anomaly-detection-in-4g-cellular-networks/data) dataset. It contains telemetry collected from a real LTE deployment across multiple base stations and cells at 15-minute intervals. Its measurements include radio-resource utilization, uplink and downlink throughput, active-user counts, and normal or unusual operating labels.
+
+This dataset supports learning real network-degradation patterns rather than reproducing a hand-written synthetic failure rule. It represents cellular-network anomalies, not confirmed physical-link failures, so the rebuild will describe its predictions as **degradation risk** unless stronger failure evidence is available.
+
+The Kaggle data is not bundled in this repository. Download access and usage remain subject to the dataset's competition rules.
+
+## Rebuild Direction
+
+The next version will focus on a validated telemetry pipeline, time-aware ML evaluation, and measurable risk-aware routing experiments. Further implementation details will be documented as each rebuild milestone is completed.
 
 ## Tech Stack
 
@@ -37,7 +51,6 @@ The included `network_data.csv` is synthetic and contains bandwidth, latency, pa
 - Python `unittest`
 
 ## Getting Started
-
 Prerequisites: Python 3.9 or newer and pip.
 
 ```bash
@@ -82,7 +95,7 @@ python -m unittest discover -s tests
 
 The tests cover failed-link exclusion, random failure selection, and restoration of graph state after simulations.
 
-## Limitations
+## Current Version Limitations
 
 - The dataset is synthetic and does not represent a live network.
 - The application does not ingest SNMP, NetFlow, router logs, or streaming telemetry.
@@ -92,4 +105,3 @@ The tests cover failed-link exclusion, random failure selection, and restoration
 ## License
 
 No license file is included. Add one before redistributing or using the project commercially.
-
