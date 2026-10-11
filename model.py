@@ -5,9 +5,11 @@ Exposes: train_model, load_model, predict_link, predict_graph_edges
 import numpy as np
 import pandas as pd
 import pickle
+import warnings
 from pathlib import Path
 from typing import Union
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (
@@ -105,9 +107,21 @@ def load_model(
     model_artifact = Path(model_path)
     scaler_artifact = Path(scaler_path)
     if model_artifact.exists() and scaler_artifact.exists():
-        with model_artifact.open("rb") as f: clf = pickle.load(f)
-        with scaler_artifact.open("rb") as f: scaler = pickle.load(f)
-        return clf, scaler
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", InconsistentVersionWarning)
+                with model_artifact.open("rb") as f: clf = pickle.load(f)
+                with scaler_artifact.open("rb") as f: scaler = pickle.load(f)
+            return clf, scaler
+        except (
+            AttributeError,
+            EOFError,
+            ImportError,
+            IndexError,
+            InconsistentVersionWarning,
+            pickle.UnpicklingError,
+        ):
+            return None, None
     return None, None
 
 

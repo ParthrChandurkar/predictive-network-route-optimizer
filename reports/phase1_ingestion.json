@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "dataset": "Kaggle Anomaly Detection in 4G Cellular Networks",
+  "source": {
+    "competition": "anomaly-detection-in-4g-cellular-networks",
+    "train": {
+      "path": "data/raw/lte/ML-MATT-CompetitionQT2021_train.csv",
+      "bytes": 2874044,
+      "sha256": "351d62fe00e942664ce21b46ab03c083be1e5665511f058cf97a7041aab843a5"
+    },
+    "test": {
+      "path": "data/raw/lte/ML-MATT-CompetitionQT2021_test.csv",
+      "bytes": 630015,
+      "sha256": "9a532801cae18cd7ebbb2d4eb548b632ca7d7e2cee136ab4fb07245fd9ae46e8"
+    }
+  },
+  "validation": {
+    "train": {
+      "source": "data/raw/lte/ML-MATT-CompetitionQT2021_train.csv",
+      "rows": 36904,
+      "cells": 33,
+      "labeled": true,
+      "duplicate_rows": 103,
+      "missing_values": {},
+      "class_counts": {
+        "0": 26721,
+        "1": 10183
+      },
+      "warnings": [
+        "The source exposes time of day but no calendar date; full chronological ordering cannot be proven."
+      ]
+    },
+    "test": {
+      "source": "data/raw/lte/ML-MATT-CompetitionQT2021_test.csv",
+      "rows": 9158,
+      "cells": 33,
+      "labeled": false,
+      "duplicate_rows": 12,
+      "missing_values": {},
+      "class_counts": {},
+      "warnings": [
+        "The source exposes time of day but no calendar date; full chronological ordering cannot be proven."
+      ]
+    },
+    "feature_columns": [
+      "time_of_day",
+      "minute_of_day",
+      "cell_id",
+      "prb_usage_ul",
+      "prb_usage_dl",
+      "mean_throughput_dl",
+      "mean_throughput_ul",
+      "max_throughput_dl",
+      "max_throughput_ul",
+      "mean_ue_dl",
+      "mean_ue_ul",
+      "max_ue_dl",
+      "max_ue_ul",
+      "max_ue_total"
+    ],
+    "label_column": "is_unusual",
+    "shared_cells": 33,
+    "train_only_cells": [],
+    "test_only_cells": [],
+    "positive_rate": 0.27593214827660956
+  },
+  "outputs": {
+    "train": "data/processed/lte/train.csv",
+    "test": "data/processed/lte/test.csv"
+  },
+  "limitations": [
+    "Labels describe unusual cellular behavior, not confirmed physical link failures.",
+    "Only time of day is available, so full chronological order cannot be reconstructed.",
+    "Duplicate observations are retained and reported; leakage-safe handling belongs to modeling."
+  ]
+}

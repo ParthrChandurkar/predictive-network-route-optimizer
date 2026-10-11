@@ -12,6 +12,14 @@ DATASET_PATH = PROJECT_ROOT / "network_data.csv"
 MODEL_PATH = PROJECT_ROOT / "failure_model.pkl"
 SCALER_PATH = PROJECT_ROOT / "failure_scaler.pkl"
 
+LTE_RAW_DIR = PROJECT_ROOT / "data" / "raw" / "lte"
+LTE_TRAIN_RAW_PATH = LTE_RAW_DIR / "ML-MATT-CompetitionQT2021_train.csv"
+LTE_TEST_RAW_PATH = LTE_RAW_DIR / "ML-MATT-CompetitionQT2021_test.csv"
+LTE_PROCESSED_DIR = PROJECT_ROOT / "data" / "processed" / "lte"
+LTE_TRAIN_PROCESSED_PATH = LTE_PROCESSED_DIR / "train.csv"
+LTE_TEST_PROCESSED_PATH = LTE_PROCESSED_DIR / "test.csv"
+PHASE1_REPORT_PATH = PROJECT_ROOT / "reports" / "phase1_ingestion.json"
+
 RANDOM_SEED = 42
 MODEL_FEATURES = (
     "bandwidth",

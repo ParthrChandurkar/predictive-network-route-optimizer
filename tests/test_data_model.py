@@ -68,6 +68,18 @@ class ModelTests(unittest.TestCase):
             self.assertIsNone(model)
             self.assertIsNone(scaler)
 
+    def test_load_returns_empty_pair_for_corrupt_artifacts(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = Path(temp_dir) / "model.pkl"
+            scaler_path = Path(temp_dir) / "scaler.pkl"
+            model_path.write_bytes(b"not a pickle")
+            scaler_path.write_bytes(b"not a pickle")
+
+            model, scaler = load_model(model_path, scaler_path)
+
+            self.assertIsNone(model)
+            self.assertIsNone(scaler)
+
 
 if __name__ == "__main__":
     unittest.main()

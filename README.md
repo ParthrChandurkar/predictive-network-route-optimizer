@@ -1,4 +1,4 @@
-# AI-Based Network Route Optimizer
+# Predictive Network Route Optimizer
 
 A Streamlit application for comparing conventional shortest-path routing with ML-assisted, risk-aware routing. The current version combines NetworkX graph algorithms, synthetic network telemetry, a Random Forest baseline, stress simulation, and Plotly visualizations.
 
@@ -37,11 +37,25 @@ This dataset supports learning real network-degradation patterns rather than rep
 
 The Kaggle data is not bundled in this repository. Download access and usage remain subject to the dataset's competition rules.
 
+After accepting the competition rules and configuring the Kaggle CLI, download both files into the ignored raw-data directory:
+
+```powershell
+New-Item -ItemType Directory -Path "data/raw/lte" -Force | Out-Null
+kaggle competitions download -c anomaly-detection-in-4g-cellular-networks -f ML-MATT-CompetitionQT2021_train.csv -p data/raw/lte
+kaggle competitions download -c anomaly-detection-in-4g-cellular-networks -f ML-MATT-CompetitionQT2021_test.csv -p data/raw/lte
+Expand-Archive -LiteralPath "data/raw/lte/ML-MATT-CompetitionQT2021_train.csv.zip" -DestinationPath "data/raw/lte" -Force
+python -m telemetry.prepare_lte
+```
+
+The preparation command validates both splits, normalizes their schema, writes canonical files under `data/processed/lte/`, and refreshes `reports/phase1_ingestion.json`. The Streamlit ML Model tab can also validate an uploaded labeled or unlabeled competition CSV. Raw and processed datasets under `data/` are intentionally excluded from Git.
+
 ## Rebuild Direction
 
 The next version will focus on a validated telemetry pipeline, time-aware ML evaluation, and measurable risk-aware routing experiments. Further implementation details will be documented as each rebuild milestone is completed.
 
 Phase 0 stabilization is complete: project settings are centralized, training data is validated, model artifacts are written safely, regression coverage has been expanded, and a reproducible synthetic baseline is stored in `reports/phase0_baseline.json`.
+
+Phase 1 ingestion is complete: the adapter supports Kaggle's semicolon-delimited LTE files, validates labeled and unlabeled splits, produces a canonical schema, records source hashes and data-quality findings, and keeps licensed raw data outside Git. The dataset contains 36,904 training observations and 9,158 test observations across 33 cells.
 
 ## Tech Stack
 
@@ -101,7 +115,9 @@ The tests cover dataset reproducibility, model persistence, topology mutation, r
 
 ## Current Version Limitations
 
-- The dataset is synthetic and does not represent a live network.
+- The active routing model still uses synthetic link data; real LTE telemetry is ingested but is not yet connected to routing decisions.
+- LTE labels indicate unusual behavior, not confirmed physical link failures.
+- The LTE data contains time of day but no calendar date, preventing a provably chronological split.
 - The application does not ingest SNMP, NetFlow, router logs, or streaming telemetry.
 - Model predictions support route comparison but do not configure real network devices.
 - Results depend on the selected penalty factor and simulated conditions.

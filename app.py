@@ -5,7 +5,7 @@ Tabs: Overview | ML Model | Builder | Routing | Algorithm Comparison | Simulatio
 import streamlit as st
 
 st.set_page_config(
-    page_title="NetRoute AI",
+    page_title="Predictive NetRoute",
     page_icon="🌐",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -47,6 +47,7 @@ from simulation      import (apply_stress, apply_random_failures,
                               restore_all_failures, network_health, snapshot, restore)
 from analytics       import (network_figure, confusion_matrix_fig, feature_importance_fig,
                               route_comparison_fig, health_gauge, risk_pie)
+from telemetry       import TelemetryValidationError, load_lte_dataset
 from utils           import RISK_COLORS
 import pandas as pd
 import plotly.graph_objects as go
@@ -65,6 +66,8 @@ defaults = {
     "fw":       None,
     "fw_ai":    None,
     "df_train": None,
+    "lte_df":   None,
+    "lte_report": None,
     "snap":     None,
 }
 for k, v in defaults.items():
@@ -138,7 +141,7 @@ with st.sidebar:
 # TAB 1 — OVERVIEW
 # ══════════════════════════════════════════════════════════════════════════════
 with t_overview:
-    st.markdown("## AI-Based Network Routing Optimizer")
+    st.markdown("## Predictive Network Route Optimizer")
     st.markdown(
         "Intelligent network dashboard combining **Dijkstra**, **Bellman-Ford**, and "
         "**Floyd-Warshall** path-finding with **ML-predicted link failure probabilities** "
@@ -181,6 +184,36 @@ with t_model:
         "Trains a **RandomForestClassifier** on synthetic link telemetry. "
         "The predicted failure probability is used as an edge penalty in AI-Enhanced routing."
     )
+
+    with st.expander("Real LTE telemetry — rebuild preview", expanded=False):
+        st.caption(
+            "Upload the Kaggle training or test CSV to validate and normalize it. "
+            "Real-data model training will be added after the ingestion contract is stable."
+        )
+        uploaded_lte = st.file_uploader(
+            "LTE telemetry CSV",
+            type=["csv"],
+            key="lte_telemetry_upload",
+        )
+        if uploaded_lte is not None:
+            try:
+                lte_dataset = load_lte_dataset(uploaded_lte, require_label=False)
+            except TelemetryValidationError as exc:
+                st.error(f"Dataset validation failed: {exc}")
+            else:
+                st.session_state.lte_df = lte_dataset.frame
+                st.session_state.lte_report = lte_dataset.report.to_dict()
+                report = st.session_state.lte_report
+                lc1, lc2, lc3 = st.columns(3)
+                lc1.metric("Rows", f"{report['rows']:,}")
+                lc2.metric("Cells", report["cells"])
+                lc3.metric("Labeled", "Yes" if report["labeled"] else "No")
+                st.dataframe(st.session_state.lte_df.head(20), use_container_width=True)
+                if report["missing_values"]:
+                    st.warning(f"Missing values: {report['missing_values']}")
+                for warning in report["warnings"]:
+                    st.info(warning)
+
     left, right = st.columns([1, 2])
 
     with left:
