@@ -8,17 +8,23 @@ import plotly.express as px
 import networkx as nx
 from utils import RISK_COLORS, ALGO_COLORS
 
-BG   = "#0f172a"
-GRID = "#1e293b"
-TEXT = "#e2e8f0"
+BG   = "#0b1220"
+GRID = "#23334d"
+TEXT = "#e8eef8"
 
 
 def _edge_risk(attributes):
     return attributes.get("routing_risk", attributes.get("failure_prob", 0.0))
 
 def _base(**kw):
-    return dict(paper_bgcolor=BG, plot_bgcolor=BG,
-                font=dict(color=TEXT), margin=dict(l=10,r=10,t=50,b=10), **kw)
+    return dict(
+        paper_bgcolor=BG,
+        plot_bgcolor=BG,
+        font=dict(color=TEXT, family="Inter, Segoe UI, sans-serif"),
+        hoverlabel=dict(bgcolor="#111b2d", bordercolor="#2d4261", font_color=TEXT),
+        margin=dict(l=16, r=16, t=54, b=16),
+        **kw,
+    )
 
 
 def network_figure(G, trad_edges=None, ai_edges=None, title="Network Topology"):
@@ -35,14 +41,14 @@ def network_figure(G, trad_edges=None, ai_edges=None, title="Network Topology"):
         x0,y0 = pos.get(u,(0,0));  x1,y1 = pos.get(v,(0,0))
         fwd,rev = (u,v),(v,u)
         if d.get("failed"):
-            col,w,dash = ALGO_COLORS["Failed"], 2, "dash"
+            col,w,dash = ALGO_COLORS["Failed"], 3, "dash"
         elif fwd in trad_set or rev in trad_set:
             col,w,dash = ALGO_COLORS["Traditional"], 5, "solid"
         elif fwd in ai_set or rev in ai_set:
             col,w,dash = ALGO_COLORS["AI-Enhanced"],  5, "solid"
         else:
             col  = RISK_COLORS.get(d.get("risk_label","Low"), RISK_COLORS["Unknown"])
-            w,dash = 2,"solid"
+            w,dash = 2.5,"solid"
         route_risk = _edge_risk(d)
         ht = (f"<b>{u}↔{v}</b><br>Dist:{d.get('distance',0)}km  BW:{d.get('bandwidth',0)}Mbps<br>"
               f"Latency:{d.get('latency',0)}ms  PktLoss:{d.get('packet_loss',0)}%<br>"
@@ -62,7 +68,7 @@ def network_figure(G, trad_edges=None, ai_edges=None, title="Network Topology"):
                              textposition="top center",
                              textfont=dict(size=13,color=TEXT,family="monospace"),
                              hoverinfo="text",hovertext=nhov,showlegend=False,
-                             marker=dict(size=24,color="#1e293b",line=dict(width=2.5,color="#38bdf8"))))
+                             marker=dict(size=29,color="#0b1526",line=dict(width=2.5,color="#22d3ee"))))
     for lbl,col in [("Traditional Route",ALGO_COLORS["Traditional"]),
                     ("AI-Enhanced Route", ALGO_COLORS["AI-Enhanced"]),
                     ("Failed Link",       ALGO_COLORS["Failed"]),
@@ -73,10 +79,13 @@ def network_figure(G, trad_edges=None, ai_edges=None, title="Network Topology"):
                                  line=dict(color=col,width=3),name=lbl))
     fig = go.Figure(data=traces)
     fig.update_layout(title=dict(text=title,font=dict(size=15,color=TEXT)),
-                      legend=dict(bgcolor=BG,font=dict(color=TEXT,size=11)),
+                      legend=dict(
+                          bgcolor="rgba(7,11,20,.78)", font=dict(color=TEXT,size=10),
+                          orientation="h", yanchor="bottom", y=1.01, xanchor="right", x=1,
+                      ),
                       xaxis=dict(showgrid=False,zeroline=False,showticklabels=False),
                       yaxis=dict(showgrid=False,zeroline=False,showticklabels=False),
-                      height=480, **_base())
+                      height=560, hovermode="closest", uirevision="network-topology", **_base())
     return fig
 
 
@@ -147,4 +156,48 @@ def risk_pie(health):
     fig.update_layout(title="Risk Distribution",
                       legend=dict(bgcolor=BG,font=dict(color=TEXT)),
                       height=280,**_base())
+    return fig
+
+
+def lte_degradation_timeline(frame, scored=None):
+    """Plot labeled anomaly rate or model degradation score by time-of-day slot."""
+    value_column = None
+    title = "LTE degradation timeline"
+    source = scored if scored is not None and "degradation_score" in scored else frame
+    if "degradation_score" in source:
+        value_column = "degradation_score"
+        title = "Predicted degradation score by time of day"
+    elif "unusual_behavior" in source:
+        value_column = "unusual_behavior"
+        title = "Observed unusual-behavior rate by time of day"
+
+    fig = go.Figure()
+    if value_column is None or source.empty:
+        fig.update_layout(title="No timeline signal available", height=300, **_base())
+        return fig
+
+    timeline = (
+        source.groupby("time_of_day", as_index=False)[value_column]
+        .mean()
+        .sort_values("time_of_day")
+    )
+    timeline[value_column] = timeline[value_column] * 100
+    fig.add_trace(
+        go.Scatter(
+            x=timeline["time_of_day"],
+            y=timeline[value_column],
+            mode="lines",
+            line=dict(color="#22d3ee", width=2.5),
+            fill="tozeroy",
+            fillcolor="rgba(34,211,238,.10)",
+            hovertemplate="%{x}<br>Signal: %{y:.1f}%<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        title=title,
+        height=320,
+        xaxis=dict(title="Time of day", gridcolor=GRID, rangeslider=dict(visible=True, thickness=.08)),
+        yaxis=dict(title="Signal (%)", gridcolor=GRID, rangemode="tozero"),
+        **_base(),
+    )
     return fig

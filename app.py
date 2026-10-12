@@ -5,34 +5,11 @@ Tabs: Overview | ML Model | Builder | Routing | Algorithm Comparison | Simulatio
 import streamlit as st
 
 st.set_page_config(
-    page_title="Predictive NetRoute",
+    page_title="NetRoute Operations",
     page_icon="🌐",
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;700&display=swap');
-html,body,[class*="css"]{font-family:'Inter',sans-serif;}
-.main .block-container{padding-top:1rem;max-width:1400px;}
-[data-testid="metric-container"]{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:12px 16px;}
-[data-testid="metric-container"] label{color:#94a3b8!important;font-size:11px!important;text-transform:uppercase;letter-spacing:.08em;}
-[data-testid="metric-container"] [data-testid="stMetricValue"]{color:#38bdf8!important;font-size:24px!important;font-weight:700;}
-.stTabs [data-baseweb="tab-list"]{background:#0f172a;border-bottom:1px solid #334155;}
-.stTabs [data-baseweb="tab"]{color:#94a3b8;font-size:12px;font-weight:600;padding:8px 14px;letter-spacing:.04em;text-transform:uppercase;}
-.stTabs [aria-selected="true"]{color:#38bdf8!important;border-bottom:2px solid #38bdf8;background:transparent!important;}
-[data-testid="stSidebar"]{background:#0f172a;border-right:1px solid #1e293b;}
-h1{color:#f1f5f9!important;font-weight:700;}
-h2{color:#e2e8f0!important;font-weight:600;font-size:1.1rem!important;}
-h3{color:#cbd5e1!important;font-size:.95rem!important;}
-.stButton button{background:#1e40af!important;color:#e2e8f0!important;border:none;border-radius:6px;font-weight:600;}
-.stButton button:hover{background:#2563eb!important;}
-hr{border-color:#1e293b;}
-.novelty-card{background:#1e293b;border-left:4px solid #38bdf8;border-radius:8px;padding:16px 20px;margin-bottom:14px;}
-.gap-card{background:#1e293b;border-left:4px solid #f59e0b;border-radius:8px;padding:14px 18px;margin-bottom:10px;}
-</style>
-""", unsafe_allow_html=True)
 
 from data_generator  import save_dataset
 from model           import train_model, load_model, predict_link, predict_graph_edges
@@ -46,20 +23,26 @@ from routing         import (route_traditional, route_ai, compute_ai_weights, co
 from simulation      import (apply_stress, apply_random_failures,
                               restore_all_failures, network_health, snapshot, restore)
 from analytics       import (network_figure, confusion_matrix_fig, feature_importance_fig,
-                              route_comparison_fig, health_gauge, risk_pie)
+                              route_comparison_fig, health_gauge, risk_pie,
+                              lte_degradation_timeline)
 from telemetry       import TelemetryValidationError, load_lte_dataset
 from modeling.lte_model import load_lte_risk_model, predict_lte_risk
 from integration     import (apply_cell_risk_to_graph, build_demo_edge_cell_mapping,
                              cell_risk_snapshot)
-from settings        import PHASE2_REPORT_PATH
+from settings        import MININET_RESULTS_PATH, PHASE2_REPORT_PATH
 from utils           import RISK_COLORS
 from observability   import configure_observability
+from ui              import (apply_dashboard_theme, render_app_header,
+                             prepare_link_inventory,
+                             render_section_header, render_sidebar_brand,
+                             render_status_panel)
 import json
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 
-configure_observability()
+OBSERVABILITY = configure_observability()
+apply_dashboard_theme(st)
 
 # ── Session state ─────────────────────────────────────────────────────────────
 defaults = {
@@ -76,6 +59,7 @@ defaults = {
     "df_train": None,
     "lte_df":   None,
     "lte_report": None,
+    "lte_scored": None,
     "lte_routing_summary": None,
     "snap":     None,
 }
@@ -92,6 +76,16 @@ if st.session_state.model is None:
 
 G = st.session_state.G
 
+page_health = network_health(G)
+page_summary = graph_summary(G)
+render_app_header(
+    st,
+    page_health,
+    page_summary["connected"],
+    st.session_state.model is not None,
+    OBSERVABILITY.enabled,
+)
+
 
 @st.cache_resource
 def get_lte_risk_model():
@@ -103,22 +97,30 @@ def refresh_predictions():
     compute_ai_weights(G)
 
 
+@st.cache_data
+def get_mininet_evidence():
+    if not MININET_RESULTS_PATH.exists():
+        return None
+    try:
+        return json.loads(MININET_RESULTS_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## 🌐 NetRoute AI")
-    st.markdown("---")
-    st.markdown("### Model Status")
+    render_sidebar_brand(st)
+    render_section_header(st, "Intelligence", "Risk engine status")
     if st.session_state.model is not None:
         st.success("✅ Model loaded")
         if st.session_state.metrics:
             m = st.session_state.metrics
-            st.metric("Accuracy", f"{m['accuracy']*100:.1f}%")
-            st.metric("F1 Score", f"{m['f1']*100:.1f}%")
+            st.metric("Synthetic accuracy", f"{m['accuracy']*100:.1f}%")
+            st.metric("Synthetic F1", f"{m['f1']*100:.1f}%")
     else:
-        st.warning("⚠️ No model trained yet\nGo to **ML Model** tab to train.")
+        st.warning("No model is loaded. Open Risk Intelligence to train the legacy baseline.")
 
-    st.markdown("---")
-    if st.button("🔄 Reset Topology", use_container_width=True):
+    if st.button("Reset topology", width="stretch"):
         st.session_state.G = build_default_topology()
         G = st.session_state.G
         if st.session_state.model:
@@ -128,26 +130,28 @@ with st.sidebar:
             st.session_state[k] = None
         st.rerun()
 
-    st.markdown("---")
     info   = graph_summary(G)
     health = network_health(G)
-    st.markdown("### Network Summary")
+    render_section_header(st, "Live topology", "Network summary")
     c1, c2 = st.columns(2)
     c1.metric("Routers", info["routers"])
     c2.metric("Links",   info["links"])
     st.metric("Health", f"{health['health_score']*100:.0f}%")
     if health["failed_links"]:
         st.error(f"⚠️ {health['failed_links']} link(s) FAILED")
-    st.caption(f"Connected: {'✅' if info['connected'] else '❌'}")
-    st.markdown("---")
-    st.caption("DAA + ML Final Year Project — VIIT 2024-25")
+    render_status_panel(st, [
+        ("Connectivity", "Connected" if info["connected"] else "Partitioned"),
+        ("Risk source", "LTE demo" if st.session_state.lte_routing_summary else "Synthetic baseline"),
+        ("Trace export", "OTLP active" if OBSERVABILITY.enabled else "Disabled"),
+    ])
+    st.caption("Research environment · decisions do not configure physical routers")
 
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
 (t_overview, t_model, t_builder, t_routing,
  t_compare, t_sim, t_analytics) = st.tabs([
-    "📊 Overview", "🤖 ML Model", "🏗️ Builder", "🗺️ Routing",
-    "⚖️ Algorithm Comparison", "⚡ Simulation", "📈 Analytics"
+    "Network Ops", "Risk Intelligence", "Topology", "Route Control",
+    "Benchmarks", "Failure Lab", "Insights"
 ])
 
 
@@ -155,55 +159,92 @@ with st.sidebar:
 # TAB 1 — OVERVIEW
 # ══════════════════════════════════════════════════════════════════════════════
 with t_overview:
-    st.markdown("## Predictive Network Route Optimizer")
-    st.markdown(
-        "Intelligent network dashboard combining **Dijkstra**, **Bellman-Ford**, and "
-        "**Floyd-Warshall** path-finding with **ML-predicted link failure probabilities** "
-        "to route traffic around risky links."
+    render_section_header(st, "Network operations", "Live topology and route posture")
+    st.caption(
+        "Topology health and selected paths. Cyan indicates link risk, blue shows the "
+        "distance route, and green shows the degradation-aware route."
     )
     health = network_health(G)
     c1,c2,c3,c4,c5 = st.columns(5)
-    c1.metric("Routers",      G.number_of_nodes())
-    c2.metric("Links",        G.number_of_edges())
-    c3.metric("Failed Links", health["failed_links"])
-    c4.metric("High Risk",    health["high_risk"])
-    c5.metric("Health Score", f"{health['health_score']*100:.0f}%")
+    c1.metric("Active nodes", G.number_of_nodes())
+    c2.metric("Monitored links", G.number_of_edges())
+    c3.metric("Failed links", health["failed_links"])
+    c4.metric("High-risk links", health["high_risk"])
+    c5.metric("Fabric health", f"{health['health_score']*100:.0f}%")
 
-    st.markdown("---")
-    col_g, col_h = st.columns([3, 1])
+    col_g, col_h = st.columns([3.25, 1], gap="medium")
     with col_g:
         trad_edges = st.session_state.trad["edges"] if st.session_state.trad and st.session_state.trad["found"] else []
         ai_edges   = st.session_state.ai["edges"]   if st.session_state.ai   and st.session_state.ai["found"]   else []
-        st.plotly_chart(network_figure(G, trad_edges, ai_edges), use_container_width=True, key="ov_network")
+        st.plotly_chart(
+            network_figure(G, trad_edges, ai_edges, "Network fabric · live route overlay"),
+            width="stretch",
+            key="ov_network",
+        )
     with col_h:
-        st.plotly_chart(health_gauge(health["health_score"]), use_container_width=True, key="ov_gauge")
-        st.plotly_chart(risk_pie(health), use_container_width=True, key="ov_pie")
+        render_section_header(st, "Control plane", "Operational posture")
+        active_route = "Not calculated"
+        if st.session_state.ai and st.session_state.ai.get("found"):
+            active_route = st.session_state.ai["path_str"]
+        render_status_panel(st, [
+            ("Topology", "Connected" if graph_summary(G)["connected"] else "Partitioned"),
+            ("Risk provenance", "LTE telemetry" if st.session_state.lte_routing_summary else "Synthetic baseline"),
+            ("Risk-aware path", active_route),
+            ("Failed edges", str(health["failed_links"])),
+        ])
+        if health["failed_links"]:
+            st.error(f"{health['failed_links']} failed link(s) require operator attention.")
+        elif health["high_risk"]:
+            st.warning(f"{health['high_risk']} high-risk link(s) are being monitored.")
+        else:
+            st.success("No active link incidents in the current topology.")
+        st.plotly_chart(health_gauge(health["health_score"]), width="stretch", key="ov_gauge")
+        evidence = get_mininet_evidence()
+        if evidence:
+            comparison = evidence["comparison"]
+            render_section_header(st, "Emulation evidence", "Mininet validation")
+            ec1, ec2 = st.columns(2)
+            ec1.metric("Throughput", f"+{comparison['throughput_gain_percent']:.0f}%")
+            ec2.metric("RTT", f"-{comparison['rtt_reduction_percent']:.0f}%")
+            st.caption("Three controlled repetitions · not a production guarantee")
 
-    st.markdown("---")
-    st.markdown("### Link Risk Table")
+    render_section_header(st, "Link telemetry", "Risk and operating-state inventory")
     df = get_edge_df(G)
     if not df.empty:
+        inventory = prepare_link_inventory(df)
         show_cols = [c for c in ["source","target","distance","bandwidth","latency",
-                                  "packet_loss","traffic_load","failure_prob","routing_risk",
+                                  "packet_loss","traffic_load","failure_prob","routing_risk_percent",
                                   "risk_source","telemetry_cell","risk_label","failed"]
-                     if c in df.columns]
-        st.dataframe(df[show_cols], use_container_width=True)
+                     if c in inventory.columns]
+        show_cols.insert(0, "operating_state")
+        st.dataframe(
+            inventory[show_cols],
+            width="stretch",
+            hide_index=True,
+            column_config={
+                "operating_state": st.column_config.TextColumn("State"),
+                "routing_risk_percent": st.column_config.ProgressColumn(
+                    "Route risk", min_value=0, max_value=100, format="%.1f%%"
+                ),
+            },
+        )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 2 — ML MODEL
 # ══════════════════════════════════════════════════════════════════════════════
 with t_model:
-    st.markdown("## Machine Learning — Link Failure Prediction")
+    render_section_header(st, "Risk intelligence", "Degradation scoring and model evidence")
     st.markdown(
-        "Trains a **RandomForestClassifier** on synthetic link telemetry. "
-        "The predicted failure probability is used as an edge penalty in AI-Enhanced routing."
+        "Inspect the real LTE unusual-behavior baseline or train the legacy synthetic "
+        "link-risk model. Scores influence route cost; they do not prove physical failure."
     )
 
-    with st.expander("Real LTE telemetry — rebuild preview", expanded=False):
+    with st.expander("Real LTE telemetry · validated degradation model", expanded=True):
         st.caption(
             "Upload the Kaggle training or test CSV to validate and normalize it. "
-            "The displayed baseline detects unusual LTE behavior; routing integration comes next."
+            "The held-out-cell baseline detects unusual LTE behavior and can be applied to "
+            "the demonstration topology through an explicitly synthetic cell-to-link mapping."
         )
         if PHASE2_REPORT_PATH.exists():
             phase2_report = json.loads(PHASE2_REPORT_PATH.read_text(encoding="utf-8"))
@@ -232,7 +273,7 @@ with t_model:
                 lc1.metric("Rows", f"{report['rows']:,}")
                 lc2.metric("Cells", report["cells"])
                 lc3.metric("Labeled", "Yes" if report["labeled"] else "No")
-                st.dataframe(st.session_state.lte_df.head(20), use_container_width=True)
+                st.dataframe(st.session_state.lte_df.head(20), width="stretch")
                 if report["missing_values"]:
                     st.warning(f"Missing values: {report['missing_values']}")
                 for warning in report["warnings"]:
@@ -254,6 +295,7 @@ with t_model:
                     if st.button("Apply LTE degradation risk to demo topology", key="apply_lte_risk"):
                         with st.spinner("Scoring telemetry and updating routing weights…"):
                             scored = predict_lte_risk(lte_model, st.session_state.lte_df)
+                            st.session_state.lte_scored = scored
                             cell_risks = cell_risk_snapshot(scored, time_slot)
                             mapping = build_demo_edge_cell_mapping(G, cell_risks)
                             summary = apply_cell_risk_to_graph(G, cell_risks, mapping)
@@ -264,12 +306,27 @@ with t_model:
                             f"{summary['mapped_edges']} links for {time_slot}."
                         )
 
+        if st.session_state.lte_df is not None:
+            render_section_header(st, "Temporal signal", "LTE degradation timeline")
+            st.plotly_chart(
+                lte_degradation_timeline(
+                    st.session_state.lte_df,
+                    st.session_state.lte_scored,
+                ),
+                width="stretch",
+                key="lte_degradation_timeline",
+            )
+            st.caption(
+                "The source provides time of day but no calendar date; this is a recurring "
+                "time-slot profile, not a chronological incident history."
+            )
+
     left, right = st.columns([1, 2])
 
     with left:
         st.markdown("### Train Model")
         n_samples = st.slider("Dataset size", 400, 2000, 1700, 100)
-        if st.button("🚀 Generate Data & Train", use_container_width=True):
+        if st.button("Train synthetic baseline", width="stretch"):
             with st.spinner("Generating dataset…"):
                 df = save_dataset(n_samples=n_samples)
                 st.session_state.df_train = df
@@ -287,7 +344,7 @@ with t_model:
         if st.session_state.df_train is not None:
             df = st.session_state.df_train
             st.markdown("#### Dataset Preview")
-            st.dataframe(df.head(8), use_container_width=True)
+            st.dataframe(df.head(8), width="stretch")
             st.caption(f"Rows: {len(df)}  |  Failure rate: {df['failure'].mean()*100:.1f}%")
 
         st.markdown("---")
@@ -314,34 +371,34 @@ with t_model:
             st.markdown("---")
             r1, r2 = st.columns(2)
             with r1:
-                st.plotly_chart(confusion_matrix_fig(m["cm"]), use_container_width=True, key="ml_cm")
+                st.plotly_chart(confusion_matrix_fig(m["cm"]), width="stretch", key="ml_cm")
             with r2:
-                st.plotly_chart(feature_importance_fig(m["feature_importance"]), use_container_width=True, key="ml_fi")
+                st.plotly_chart(feature_importance_fig(m["feature_importance"]), width="stretch", key="ml_fi")
             with st.expander("📄 Full Classification Report"):
                 st.code(m["report"])
         else:
-            st.info("ℹ️ Click **Generate Data & Train** on the left to train the model.")
+            st.info("Use **Train synthetic baseline** to unlock the legacy model panels.")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 3 — NETWORK BUILDER
 # ══════════════════════════════════════════════════════════════════════════════
 with t_builder:
-    st.markdown("## Network Topology Builder")
+    render_section_header(st, "Topology management", "Network fabric configuration")
     bl, br = st.columns([1, 2])
 
     with bl:
         st.markdown("### Routers")
         r_name = st.text_input("Router name", placeholder="e.g. R9")
         ra, rb = st.columns(2)
-        if ra.button("➕ Add", use_container_width=True):
+        if ra.button("Add", width="stretch"):
             if r_name.strip():
                 ok, msg = add_router(G, r_name.strip())
                 (st.success if ok else st.error)(msg)
                 if ok: st.rerun()
             else:
                 st.warning("Enter a router name.")
-        if rb.button("🗑️ Remove", use_container_width=True):
+        if rb.button("Remove", width="stretch"):
             if r_name.strip():
                 ok, msg = remove_router(G, r_name.strip())
                 (st.success if ok else st.error)(msg)
@@ -361,7 +418,7 @@ with t_builder:
             l_lat  = st.slider("Latency (ms)",     1, 300,  20, key="bld_lat")
             l_pkt  = st.slider("Packet Loss (%)",  0,  20,   2, key="bld_pkt")
             l_traf = st.slider("Traffic Load (%)", 0, 100,  50, key="bld_traf")
-            if st.button("➕ Add Link", use_container_width=True):
+            if st.button("Add link", width="stretch"):
                 attrs = dict(distance=float(l_dist), bandwidth=float(l_bw),
                              latency=float(l_lat), packet_loss=float(l_pkt),
                              traffic_load=float(l_traf))
@@ -379,7 +436,7 @@ with t_builder:
         edge_opts = [f"{u}↔{v}" for u,v in G.edges()]
         if edge_opts:
             sel_rm = st.selectbox("Select link to remove", edge_opts, key="rm_link")
-            if st.button("🗑️ Remove Link", use_container_width=True):
+            if st.button("Remove link", width="stretch"):
                 p = sel_rm.split("↔")
                 ok, msg = remove_link(G, p[0], p[1])
                 (st.success if ok else st.error)(msg)
@@ -397,7 +454,7 @@ with t_builder:
             e_lat  = ec1.number_input("Latency",     value=float(ex.get("latency",     20)), min_value=1.0,  step=1.0,  key="e_lat")
             e_pkt  = ec2.number_input("Packet Loss", value=float(ex.get("packet_loss",  1)), min_value=0.0,  step=0.5,  key="e_pkt")
             e_traf = ec1.number_input("Traffic Load",value=float(ex.get("traffic_load",50)), min_value=0.0,  step=5.0,  key="e_traf")
-            if st.button("💾 Update Link", use_container_width=True):
+            if st.button("Update link", width="stretch"):
                 ok, msg = update_link(G, u2, v2, dict(distance=e_dist, bandwidth=e_bw,
                     latency=e_lat, packet_loss=e_pkt, traffic_load=e_traf))
                 (st.success if ok else st.error)(msg)
@@ -406,25 +463,26 @@ with t_builder:
 
     with br:
         st.markdown("### Current Topology")
-        st.plotly_chart(network_figure(G, title="Network Topology"), use_container_width=True, key="bld_network")
+        st.plotly_chart(network_figure(G, title="Network topology"), width="stretch", key="bld_network")
         st.markdown("### Edge Table")
         df_e = get_edge_df(G)
         if not df_e.empty:
-            cols = [c for c in ["source","target","distance","bandwidth","latency",
-                                 "packet_loss","traffic_load","failure_prob","routing_risk",
+            topology_inventory = prepare_link_inventory(df_e)
+            cols = [c for c in ["operating_state","source","target","distance","bandwidth","latency",
+                                 "packet_loss","traffic_load","failure_prob","routing_risk_percent",
                                  "risk_source","telemetry_cell","risk_label","failed"]
-                    if c in df_e.columns]
-            st.dataframe(df_e[cols], use_container_width=True)
+                    if c in topology_inventory.columns]
+            st.dataframe(topology_inventory[cols], width="stretch", hide_index=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 4 — ROUTING (original 2-algo view)
 # ══════════════════════════════════════════════════════════════════════════════
 with t_routing:
-    st.markdown("## Routing Engine")
+    render_section_header(st, "Route control", "Path calculation and decision comparison")
     st.markdown(
         "**Traditional Dijkstra** minimises distance only. "
-        "**AI-Enhanced Dijkstra** adds `ai_weight = distance + routing_risk × penalty` "
+        "**Risk-aware Dijkstra** adds `ai_weight = distance + routing_risk × penalty` "
         "to steer traffic around high-risk links."
     )
     nodes = sorted(G.nodes())
@@ -434,9 +492,9 @@ with t_routing:
         rc1, rc2, rc3 = st.columns([1,1,2])
         src     = rc1.selectbox("Source",      nodes, key="rt_src")
         dst     = rc2.selectbox("Destination", nodes, key="rt_dst", index=min(1,len(nodes)-1))
-        penalty = rc3.slider("AI Penalty Factor", 50, 500, 200, 10)
+        penalty = rc3.slider("Risk penalty factor", 50, 500, 200, 10)
 
-        if st.button("🚀 Compute Routes", use_container_width=True):
+        if st.button("Compute routes", width="stretch"):
             if src == dst:
                 st.error("Source and destination must differ.")
             else:
@@ -452,7 +510,7 @@ with t_routing:
             t_edges = trad["edges"] if trad["found"] else []
             a_edges = ai["edges"]   if ai["found"]   else []
             st.plotly_chart(network_figure(G, t_edges, a_edges, "Routing Visualisation"),
-                            use_container_width=True, key="rt_network")
+                            width="stretch", key="rt_network")
             st.markdown("---")
             dc1, dc2 = st.columns(2)
             with dc1:
@@ -470,7 +528,7 @@ with t_routing:
                     st.error("No path found.")
 
             with dc2:
-                st.markdown("#### 🟢 AI-Enhanced Dijkstra")
+                st.markdown("#### Risk-aware Dijkstra")
                 if ai["found"]:
                     st.success(ai["path_str"])
                     m1,m2 = st.columns(2)
@@ -483,14 +541,24 @@ with t_routing:
                 else:
                     st.error("No path found.")
 
-            st.markdown("---")
-            st.plotly_chart(route_comparison_fig(trad, ai), use_container_width=True, key="rt_compare")
+            if trad["found"] and ai["found"]:
+                recommended = "Risk-aware" if ai["avg_risk"] < trad["avg_risk"] else "Traditional"
+                render_section_header(st, "Decision record", "Route recommendation")
+                render_status_panel(st, [
+                    ("Recommended policy", recommended),
+                    ("Traditional path", trad["path_str"]),
+                    ("Risk-aware path", ai["path_str"]),
+                    ("Risk delta", f"{(trad['avg_risk'] - ai['avg_risk']) * 100:+.1f} points"),
+                    ("Distance overhead", f"{ai['dist_cost'] - trad['dist_cost']:+.1f} km"),
+                ])
+
+            st.plotly_chart(route_comparison_fig(trad, ai), width="stretch", key="rt_compare")
 
             if trad["found"] and ai["found"]:
                 risk_delta = trad["avg_risk"] - ai["avg_risk"]
                 dist_delta = ai["dist_cost"] - trad["dist_cost"]
                 if risk_delta > 0.005:
-                    st.info(f"✅ AI-Enhanced route reduces average risk by **{risk_delta*100:.1f}%** "
+                    st.info(f"Risk-aware routing reduces average path risk by **{risk_delta*100:.1f}%** "
                             f"at an extra **{dist_delta:.0f} km** distance overhead.")
                 elif risk_delta < -0.005:
                     st.warning("⚠️ Traditional route has lower risk in current topology state.")
@@ -502,14 +570,14 @@ with t_routing:
 # TAB 5 — ALGORITHM COMPARISON  ★ NEW TAB ★
 # ══════════════════════════════════════════════════════════════════════════════
 with t_compare:
-    st.markdown("## ⚖️ Algorithm Comparison: Dijkstra vs Bellman-Ford vs Floyd-Warshall")
+    render_section_header(st, "Routing benchmarks", "Dijkstra · Bellman-Ford · Floyd-Warshall")
     st.markdown(
-        "Run all **6 routing algorithms** (3 traditional + 3 AI-enhanced) simultaneously "
+        "Run all **six routing algorithms** (three traditional and three risk-aware) simultaneously "
         "and compare their paths, distances, risk levels, and execution times."
     )
 
     if not st.session_state.model:
-        st.warning("⚠️ Please train the ML model first (ML Model tab) for AI-enhanced results.")
+        st.warning("Train the legacy model in Risk Intelligence to populate synthetic risk scores.")
 
     nodes = sorted(G.nodes())
     if len(nodes) < 2:
@@ -518,9 +586,9 @@ with t_compare:
         cc1, cc2, cc3 = st.columns([1,1,2])
         cmp_src     = cc1.selectbox("Source",      nodes, key="cmp_src")
         cmp_dst     = cc2.selectbox("Destination", nodes, key="cmp_dst", index=min(1,len(nodes)-1))
-        cmp_penalty = cc3.slider("AI Penalty Factor", 50, 500, 200, 10, key="cmp_pen")
+        cmp_penalty = cc3.slider("Risk penalty factor", 50, 500, 200, 10, key="cmp_pen")
 
-        if st.button("🚀 Run All 6 Algorithms", use_container_width=True, key="cmp_run"):
+        if st.button("Run all six algorithms", width="stretch", key="cmp_run"):
             if cmp_src == cmp_dst:
                 st.error("Source and destination must differ.")
             else:
@@ -547,7 +615,7 @@ with t_compare:
 
             st.markdown("---")
             st.markdown("### 📊 Summary Comparison Table")
-            st.dataframe(df_cmp, use_container_width=True, hide_index=True)
+            st.dataframe(df_cmp, width="stretch", hide_index=True)
 
             st.markdown("---")
 
@@ -574,7 +642,7 @@ with t_compare:
                         xaxis=dict(tickangle=-20),
                         margin=dict(l=10,r=10,t=30,b=80)
                     )
-                    st.plotly_chart(fig_dist, use_container_width=True, key="cmp_dist")
+                    st.plotly_chart(fig_dist, width="stretch", key="cmp_dist")
 
                 with col_chart2:
                     st.markdown("#### Avg Risk (%) by Algorithm")
@@ -592,7 +660,7 @@ with t_compare:
                         xaxis=dict(tickangle=-20),
                         margin=dict(l=10,r=10,t=30,b=80)
                     )
-                    st.plotly_chart(fig_risk, use_container_width=True, key="cmp_risk")
+                    st.plotly_chart(fig_risk, width="stretch", key="cmp_risk")
 
                 # ── Execution time chart ─────────────────────────────────────
                 st.markdown("#### ⏱ Execution Time (ms) by Algorithm")
@@ -611,7 +679,7 @@ with t_compare:
                     xaxis=dict(tickangle=-20),
                     margin=dict(l=10,r=10,t=30,b=80)
                 )
-                st.plotly_chart(fig_time, use_container_width=True, key="cmp_time")
+                st.plotly_chart(fig_time, width="stretch", key="cmp_time")
 
             st.markdown("---")
             # ── Per-algorithm detail cards ───────────────────────────────────
@@ -655,7 +723,7 @@ with t_compare:
                         row_data[v] = "—" if (u == v) else (f"{val:.0f}" if val < 1e8 else "∞")
                     matrix_data.append(row_data)
                 df_matrix = pd.DataFrame(matrix_data).set_index("Router")
-                st.dataframe(df_matrix, use_container_width=True)
+                st.dataframe(df_matrix, width="stretch")
 
             st.markdown("---")
             # ── Algorithm Theory ─────────────────────────────────────────────
@@ -668,15 +736,18 @@ with t_compare:
                 "All-Pairs": ["❌ No", "❌ No", "✅ Yes"],
                 "Best For":  ["Large sparse graphs", "Failure-penalised weights", "Small dense networks / routing tables"],
             }
-            st.dataframe(pd.DataFrame(theory_data), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(theory_data), width="stretch", hide_index=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 6 — SIMULATION
 # ══════════════════════════════════════════════════════════════════════════════
 with t_sim:
-    st.markdown("## Simulation Engine")
-    st.markdown("Apply network stress conditions. After running, edge failure probabilities are recalculated.")
+    render_section_header(st, "Failure laboratory", "Controlled degradation and outage injection")
+    st.markdown(
+        "Apply controlled traffic, latency, packet-loss, and outage conditions. "
+        "Scenarios mutate only the in-memory laboratory topology and are fully reversible."
+    )
 
     sl, sr = st.columns([1, 2])
     with sl:
@@ -689,7 +760,7 @@ with t_sim:
 
         st.markdown("---")
         sa, sb = st.columns(2)
-        if sa.button("▶️ Run Simulation", use_container_width=True):
+        if sa.button("Run scenario", width="stretch"):
             st.session_state.snap = snapshot(G)
             apply_stress(G, t_mult, l_mult, p_mult)
             apply_random_failures(G, n_fail=n_fail, seed=int(seed_v))
@@ -699,7 +770,7 @@ with t_sim:
             st.success("Simulation applied!")
             st.rerun()
 
-        if sb.button("🔄 Restore", use_container_width=True):
+        if sb.button("Restore", width="stretch"):
             if st.session_state.snap:
                 restore(G, st.session_state.snap)
                 restore_all_failures(G)
@@ -722,11 +793,11 @@ with t_sim:
             sel_sim = st.selectbox("Select link", edge_opts_sim, key="sim_link_sel")
             p_sim = sel_sim.split("↔")
             scol1, scol2 = st.columns(2)
-            if scol1.button("🔴 Fail",    use_container_width=True):
+            if scol1.button("Fail link", width="stretch"):
                 ok,msg = set_link_failed(G, p_sim[0], p_sim[1], True)
                 (st.success if ok else st.error)(msg)
                 if ok: st.rerun()
-            if scol2.button("🟢 Restore", use_container_width=True):
+            if scol2.button("Restore link", width="stretch"):
                 ok,msg = set_link_failed(G, p_sim[0], p_sim[1], False)
                 (st.success if ok else st.error)(msg)
                 if ok: st.rerun()
@@ -742,23 +813,24 @@ with t_sim:
     with sr:
         st.markdown("### Simulated Topology")
         st.plotly_chart(network_figure(G, title="Simulated Network State"),
-                        use_container_width=True, key="sim_network")
+                        width="stretch", key="sim_network")
         st.plotly_chart(health_gauge(network_health(G)["health_score"]),
-                        use_container_width=True, key="sim_gauge")
+                        width="stretch", key="sim_gauge")
         df_sim = get_edge_df(G)
         if not df_sim.empty:
-            show = [c for c in ["source","target","traffic_load","latency","packet_loss",
-                                  "failure_prob","routing_risk","risk_source","telemetry_cell",
-                                  "risk_label","failed"] if c in df_sim.columns]
+            simulation_inventory = prepare_link_inventory(df_sim)
+            show = [c for c in ["operating_state","source","target","traffic_load","latency","packet_loss",
+                                  "failure_prob","routing_risk_percent","risk_source","telemetry_cell",
+                                  "risk_label","failed"] if c in simulation_inventory.columns]
             st.markdown("### Live Edge Status")
-            st.dataframe(df_sim[show], use_container_width=True)
+            st.dataframe(simulation_inventory[show], width="stretch", hide_index=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 7 — ANALYTICS
 # ══════════════════════════════════════════════════════════════════════════════
 with t_analytics:
-    st.markdown("## Analytics Dashboard")
+    render_section_header(st, "Network insights", "Risk, model, and route evidence")
     h = network_health(G)
     ac1,ac2,ac3,ac4,ac5 = st.columns(5)
     ac1.metric("Total Links",   h["total_links"])
@@ -767,14 +839,43 @@ with t_analytics:
     ac4.metric("Medium Risk",   h["medium_risk"])
     ac5.metric("Avg Routing Risk", f"{h['avg_risk']*100:.1f}%")
 
+    evidence_left, evidence_right = st.columns([1.25, 1])
+    with evidence_left:
+        render_section_header(st, "Observability", "Telemetry pipeline")
+        render_status_panel(st, [
+            ("Application export", "Enabled" if OBSERVABILITY.enabled else "Opt-in / disabled"),
+            ("Protocol", "OTLP over HTTP"),
+            ("Trace backend", "Jaeger · local memory"),
+            ("Metrics backend", "Prometheus · local volume"),
+        ])
+        ol1, ol2 = st.columns(2)
+        ol1.link_button("Open Jaeger", "http://localhost:16686", width="stretch")
+        ol2.link_button("Open Prometheus", "http://localhost:9090", width="stretch")
+        st.caption("Local endpoints require the observability Compose stack to be running.")
+    with evidence_right:
+        render_section_header(st, "Experiment evidence", "Controlled Mininet result")
+        mininet_evidence = get_mininet_evidence()
+        if mininet_evidence:
+            comparison = mininet_evidence["comparison"]
+            ev1, ev2 = st.columns(2)
+            ev1.metric("Throughput gain", f"{comparison['throughput_gain_percent']:.1f}%")
+            ev2.metric("RTT reduction", f"{comparison['rtt_reduction_percent']:.1f}%")
+            render_status_panel(st, [
+                ("Repetitions", str(mininet_evidence["aggregates"]["traditional"]["runs"])),
+                ("Packet-loss change", f"{comparison['packet_loss_reduction_points']:.1f} points"),
+                ("Evidence class", "Emulator / controlled"),
+            ])
+        else:
+            st.info("Run the Phase 4 Mininet experiment to populate this evidence panel.")
+
     st.markdown("---")
     r1, r2 = st.columns(2)
     with r1:
-        st.plotly_chart(risk_pie(h), use_container_width=True, key="an_pie")
+        st.plotly_chart(risk_pie(h), width="stretch", key="an_pie")
     with r2:
         if st.session_state.metrics:
             st.plotly_chart(feature_importance_fig(st.session_state.metrics["feature_importance"]),
-                            use_container_width=True, key="an_fi")
+                            width="stretch", key="an_fi")
         else:
             st.info("Train a model (ML Model tab) to see feature importance.")
 
@@ -783,11 +884,11 @@ with t_analytics:
         ac_l, ac_r = st.columns(2)
         with ac_l:
             st.plotly_chart(confusion_matrix_fig(st.session_state.metrics["cm"]),
-                            use_container_width=True, key="an_cm")
+                            width="stretch", key="an_cm")
         with ac_r:
             if st.session_state.trad and st.session_state.ai:
                 st.plotly_chart(route_comparison_fig(st.session_state.trad, st.session_state.ai),
-                                use_container_width=True, key="an_compare")
+                                width="stretch", key="an_compare")
             else:
                 st.info("Compute routes (Routing tab) to see comparison chart.")
     else:
@@ -797,11 +898,12 @@ with t_analytics:
     st.markdown("### Full Link Table")
     df_a = get_edge_df(G)
     if not df_a.empty:
-        cols_a = [c for c in ["source","target","distance","bandwidth","latency",
-                               "packet_loss","traffic_load","failure_prob","routing_risk",
+        analytics_inventory = prepare_link_inventory(df_a)
+        cols_a = [c for c in ["operating_state","source","target","distance","bandwidth","latency",
+                               "packet_loss","traffic_load","failure_prob","routing_risk_percent",
                                "risk_source","telemetry_cell","risk_label","ai_weight","failed"]
-                  if c in df_a.columns]
-        st.dataframe(df_a[cols_a], use_container_width=True)
+                  if c in analytics_inventory.columns]
+        st.dataframe(analytics_inventory[cols_a], width="stretch", hide_index=True)
 
     st.markdown("---")
     st.markdown("### Algorithm Complexity Reference")

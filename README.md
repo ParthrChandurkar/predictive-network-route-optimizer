@@ -65,6 +65,8 @@ Phase 4 Mininet experimentation is complete. A controlled eight-router experimen
 
 Phase 5 observability is complete: routing, LTE inference, and Mininet measurements have opt-in OpenTelemetry instrumentation. A local OpenTelemetry Collector sends traces to Jaeger and exposes metrics for Prometheus. This makes route decisions and experimental performance inspectable without claiming that the demo stack is a production monitoring deployment.
 
+Phase 6 dashboard modernization is complete: the Streamlit interface now uses a responsive network-operations layout with live fabric status, severity-aware link inventory, clearer risk provenance, route recommendations, a recurring LTE time-slot signal, Mininet evidence, observability access, and dedicated control-plane workflows. The presentation remains a research dashboard rather than a production NOC product.
+
 On Windows, install the emulation dependencies in the existing WSL2 Ubuntu distribution from PowerShell:
 
 ```powershell
