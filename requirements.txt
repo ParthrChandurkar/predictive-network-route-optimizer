@@ -4,3 +4,6 @@ pandas>=2.2
 scikit-learn>=1.4
 plotly>=5.22
 numpy>=1.26
+opentelemetry-api>=1.31.0
+opentelemetry-sdk>=1.31.0
+opentelemetry-exporter-otlp-proto-http>=1.31.0

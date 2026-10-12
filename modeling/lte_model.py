@@ -6,6 +6,7 @@ import hashlib
 import json
 import pickle
 import platform
+import time
 import warnings
 from pathlib import Path
 from typing import Union
@@ -27,6 +28,7 @@ from settings import (
     RANDOM_SEED,
 )
 from telemetry.schemas import LTE_LABEL_COLUMN, TelemetryValidationError
+from observability import model_inference_span, record_model_inference
 
 
 def _atomic_pickle(value, destination: Path) -> None:
@@ -132,7 +134,10 @@ def load_lte_risk_model(model_path: Union[str, Path] = LTE_MODEL_PATH):
 def predict_lte_risk(model, frame: pd.DataFrame) -> pd.DataFrame:
     if model is None:
         raise ValueError("LTE risk model is not loaded")
-    probabilities = model.predict_proba(build_lte_features(frame))[:, 1]
+    with model_inference_span(len(frame)):
+        started_at = time.perf_counter()
+        probabilities = model.predict_proba(build_lte_features(frame))[:, 1]
+        record_model_inference(len(frame), started_at, probabilities)
     result = frame.loc[:, ["time_of_day", "cell_id"]].copy()
     result["degradation_score"] = probabilities
     result["risk_label"] = pd.cut(

@@ -25,7 +25,7 @@ A higher penalty makes the routing algorithms prefer lower-risk links, even when
 
 ## Architecture
 
-`network_builder.py` creates and updates the NetworkX topology. `model.py` trains or loads the model and assigns risk values to links. `routing.py` calculates conventional and failure-aware paths. `simulation.py` applies temporary network conditions, while `analytics.py` builds the Plotly figures used by `app.py`.
+`network_builder.py` creates and updates the NetworkX topology. `model.py` trains or loads the model and assigns risk values to links. `routing.py` calculates conventional and failure-aware paths. `simulation.py` applies temporary network conditions, while `analytics.py` builds the Plotly figures used by `app.py`. The optional `observability` package exports application telemetry through the local Collector stack.
 
 The included `network_data.csv` is synthetic and contains bandwidth, latency, packet loss, traffic load, and a binary failure label. Saved model and scaler artifacts are provided for local use.
 
@@ -63,6 +63,8 @@ Phase 3 model integration is complete: a reproducible local model artifact produ
 
 Phase 4 Mininet experimentation is complete. A controlled eight-router experiment makes conventional routing cross a severely degraded link while risk-aware routing selects a longer, healthier path. Across three alternating-order WSL2/Mininet runs, risk-aware routing raised mean TCP throughput from 0.333 to 1.168 Mbps (+251%) and reduced mean RTT from 278.2 to 93.0 ms (-66.6%). Mean ping loss was unchanged at 13.3%, so this small experiment does not support a packet-loss improvement claim. The raw trials and environment details are stored in `reports/phase4_mininet_results.json`; these are emulator results, not production-network guarantees.
 
+Phase 5 observability is complete: routing, LTE inference, and Mininet measurements have opt-in OpenTelemetry instrumentation. A local OpenTelemetry Collector sends traces to Jaeger and exposes metrics for Prometheus. This makes route decisions and experimental performance inspectable without claiming that the demo stack is a production monitoring deployment.
+
 On Windows, install the emulation dependencies in the existing WSL2 Ubuntu distribution from PowerShell:
 
 ```powershell
@@ -82,6 +84,25 @@ wsl -d Ubuntu --cd "$repoPath" -- sudo python3 experiments/mininet_runner.py `
 
 If a Mininet run is interrupted, clean stale virtual interfaces with `wsl -d Ubuntu -- sudo mn -c` before retrying. Mininet requires Linux network namespaces and root access; the official project recommends a VM or native Ubuntu installation.
 
+## Local Observability
+
+Start the Collector, Jaeger, and Prometheus stack with Docker Desktop running:
+
+```powershell
+docker compose -f compose.observability.yaml up -d
+$env:OBSERVABILITY_ENABLED = "true"
+$env:OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4318"
+python -m streamlit run app.py
+```
+
+Use the application normally, then inspect traces at `http://localhost:16686` and metrics at `http://localhost:9090`. To emit a deterministic verification batch without opening Streamlit:
+
+```powershell
+python scripts/emit_observability_demo.py
+```
+
+Stop the local stack with `docker compose -f compose.observability.yaml down`. Prometheus data is kept in a named Docker volume; add `--volumes` only when you intentionally want to delete it.
+
 ## Tech Stack
 
 - Python
@@ -89,6 +110,7 @@ If a Mininet run is interrupted, clean stale virtual interfaces with `wsl -d Ubu
 - NetworkX
 - pandas and NumPy
 - scikit-learn
+- OpenTelemetry, Jaeger, and Prometheus
 - Python `unittest`
 
 ## Getting Started
@@ -139,13 +161,14 @@ python -m modeling.lte_evaluation
 python -m modeling.lte_model
 python -m experiments.mininet_plan
 python -m experiments.mininet_runner reports/phase4_mininet_plan.json --dry-run
+python scripts/emit_observability_demo.py
 ```
 
-The tests cover dataset reproducibility, telemetry validation, leakage-safe LTE features, model persistence, topology mutation, routing consistency, failed-link exclusion, and simulation restoration.
+The tests cover dataset reproducibility, telemetry validation, leakage-safe LTE features, model persistence, topology mutation, routing consistency, failed-link exclusion, simulation restoration, and the opt-in observability boundary.
 
 ## Current Version Limitations
 
-- The active routing model still uses synthetic link data; real LTE telemetry is ingested but is not yet connected to routing decisions.
+- The dashboard can apply LTE degradation scores to route comparison, but its cell-to-link mapping is only a deterministic demonstration.
 - LTE labels indicate unusual behavior, not confirmed physical link failures.
 - The LTE data contains time of day but no calendar date, preventing a provably chronological split.
 - The LTE cell-to-link mapping is experimental because the source dataset provides no physical topology.

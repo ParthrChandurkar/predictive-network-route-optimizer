@@ -1,0 +1,38 @@
+{
+  "phase": "phase-5-opentelemetry-observability",
+  "verified_at": "2026-10-12T12:07:30Z",
+  "architecture": {
+    "application_export": "OTLP/HTTP",
+    "collector": "OpenTelemetry Collector Contrib",
+    "trace_backend": "Jaeger",
+    "metrics_backend": "Prometheus"
+  },
+  "versions": {
+    "otel_collector": "0.162.0",
+    "jaeger": "2.22.0",
+    "prometheus": "3.15.0",
+    "opentelemetry_python": "1.38.0"
+  },
+  "verification": {
+    "collector_health": "Server available",
+    "prometheus_target": "network-route-optimizer:up",
+    "jaeger_service": "predictive-network-route-optimizer",
+    "demo_route_spans_emitted": 3,
+    "prometheus_metric_families": [
+      "route_calculations_total",
+      "route_duration_milliseconds",
+      "route_hops",
+      "route_average_risk"
+    ]
+  },
+  "scope": [
+    "route calculations",
+    "LTE model inference",
+    "Mininet trial measurements"
+  ],
+  "limitations": [
+    "The local stack uses Jaeger in-memory trace storage.",
+    "Instrumentation is opt-in and is disabled unless OBSERVABILITY_ENABLED is true.",
+    "This verification demonstrates telemetry flow, not production observability readiness."
+  ]
+}

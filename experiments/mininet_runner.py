@@ -8,8 +8,14 @@ import platform
 import re
 import statistics
 import subprocess
+import sys
 import time
 from pathlib import Path
+
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from observability import configure_observability, observe_mininet_trial
 
 
 PING_SUMMARY = re.compile(
@@ -158,6 +164,7 @@ def _build_network(plan: dict, route_path: list[str]):
     return network, hsrc, hdst
 
 
+@observe_mininet_trial
 def _run_trial(plan: dict, route_name: str) -> dict:
     route = plan["routes"][route_name]
     network = hsrc = hdst = None
@@ -175,12 +182,13 @@ def _run_trial(plan: dict, route_name: str) -> dict:
             f"-P {plan['measurements']['iperf_parallel_streams']} -J"
         )
         server.wait(timeout=10)
-        return {
+        result = {
             "route": route_name,
             "path": route["path"],
             "ping": parse_ping_output(ping_output),
             "iperf": parse_iperf_output(iperf_output),
         }
+        return result
     finally:
         if server is not None and server.poll() is None:
             server.terminate()
@@ -277,6 +285,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+    configure_observability()
     plan = load_and_validate_plan(args.plan)
     result = dry_run_summary(plan) if args.dry_run else run_experiment(plan)
     serialized = json.dumps(result, indent=2) + "\n"

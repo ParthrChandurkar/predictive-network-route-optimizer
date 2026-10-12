@@ -53,10 +53,13 @@ from integration     import (apply_cell_risk_to_graph, build_demo_edge_cell_mapp
                              cell_risk_snapshot)
 from settings        import PHASE2_REPORT_PATH
 from utils           import RISK_COLORS
+from observability   import configure_observability
 import json
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
+
+configure_observability()
 
 # ── Session state ─────────────────────────────────────────────────────────────
 defaults = {

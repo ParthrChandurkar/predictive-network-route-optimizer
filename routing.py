@@ -9,6 +9,7 @@ import numpy as np
 import time
 
 from settings import DEFAULT_ROUTE_PENALTY
+from observability import observe_route
 
 PENALTY_DEFAULT = DEFAULT_ROUTE_PENALTY
 
@@ -74,6 +75,7 @@ def _not_found(algo_name: str, elapsed_ms: float = 0.0) -> dict:
     }
 
 
+@observe_route(risk_aware=False)
 def route_traditional(G: nx.Graph, src: str, dst: str) -> dict:
     H = _active_graph(G)
     t0 = time.perf_counter()
@@ -88,6 +90,7 @@ def route_traditional(G: nx.Graph, src: str, dst: str) -> dict:
         return _not_found("Traditional Dijkstra", (time.perf_counter() - t0) * 1000)
 
 
+@observe_route(risk_aware=True)
 def route_ai(G: nx.Graph, src: str, dst: str, penalty: float = PENALTY_DEFAULT) -> dict:
     compute_ai_weights(G, penalty)
     H = _active_graph(G)
@@ -103,6 +106,7 @@ def route_ai(G: nx.Graph, src: str, dst: str, penalty: float = PENALTY_DEFAULT) 
         return _not_found("AI-Enhanced Dijkstra", (time.perf_counter() - t0) * 1000)
 
 
+@observe_route(risk_aware=False)
 def route_bellman_ford(G: nx.Graph, src: str, dst: str) -> dict:
     H = _active_graph(G)
     t0 = time.perf_counter()
@@ -117,6 +121,7 @@ def route_bellman_ford(G: nx.Graph, src: str, dst: str) -> dict:
         return _not_found("Bellman-Ford", (time.perf_counter() - t0) * 1000)
 
 
+@observe_route(risk_aware=True)
 def route_bellman_ford_ai(G: nx.Graph, src: str, dst: str, penalty: float = PENALTY_DEFAULT) -> dict:
     compute_ai_weights(G, penalty)
     H = _active_graph(G)
@@ -132,6 +137,7 @@ def route_bellman_ford_ai(G: nx.Graph, src: str, dst: str, penalty: float = PENA
         return _not_found("AI Bellman-Ford", (time.perf_counter() - t0) * 1000)
 
 
+@observe_route(risk_aware=False)
 def route_floyd_warshall(G: nx.Graph, src: str, dst: str) -> dict:
     H = _active_graph(G)
     t0 = time.perf_counter()
@@ -150,6 +156,7 @@ def route_floyd_warshall(G: nx.Graph, src: str, dst: str) -> dict:
         return _not_found("Floyd-Warshall", (time.perf_counter() - t0) * 1000)
 
 
+@observe_route(risk_aware=True)
 def route_floyd_warshall_ai(G: nx.Graph, src: str, dst: str, penalty: float = PENALTY_DEFAULT) -> dict:
     compute_ai_weights(G, penalty)
     H = _active_graph(G)
