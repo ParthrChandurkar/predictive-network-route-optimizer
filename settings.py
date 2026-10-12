@@ -22,6 +22,8 @@ PHASE1_REPORT_PATH = PROJECT_ROOT / "reports" / "phase1_ingestion.json"
 PHASE2_REPORT_PATH = PROJECT_ROOT / "reports" / "phase2_model_baselines.json"
 LTE_MODEL_PATH = PROJECT_ROOT / "artifacts" / "lte_degradation_model.pkl"
 PHASE3_REPORT_PATH = PROJECT_ROOT / "reports" / "phase3_model_artifact.json"
+MININET_PLAN_PATH = PROJECT_ROOT / "reports" / "phase4_mininet_plan.json"
+MININET_RESULTS_PATH = PROJECT_ROOT / "reports" / "phase4_mininet_results.json"
 
 RANDOM_SEED = 42
 MODEL_FEATURES = (

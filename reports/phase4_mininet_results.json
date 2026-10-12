@@ -1,0 +1,212 @@
+{
+  "phase": "phase-4-mininet-routing-experiment",
+  "environment": {
+    "kernel": "6.18.40.1-microsoft-standard-WSL2",
+    "mininet": "2.3.0",
+    "iperf3": "iperf 3.20 (cJSON 1.7.15)"
+  },
+  "scenario": {
+    "name": "single-link-severe-degradation",
+    "source_router": "R1",
+    "destination_router": "R8",
+    "impaired_edge": [
+      "R1",
+      "R2"
+    ],
+    "impairment": {
+      "bandwidth_mbps": 5.0,
+      "delay_ms": 100.0,
+      "loss_percent": 5.0
+    },
+    "penalty": 200.0
+  },
+  "trials": [
+    {
+      "route": "traditional",
+      "path": [
+        "R1",
+        "R2",
+        "R4",
+        "R7",
+        "R8"
+      ],
+      "ping": {
+        "packets_sent": 10,
+        "packets_received": 9,
+        "packet_loss_percent": 10.0,
+        "average_rtt_ms": 277.144
+      },
+      "iperf": {
+        "throughput_mbps": 0.3992273407313536,
+        "retransmits": 12
+      },
+      "repetition": 1
+    },
+    {
+      "route": "risk_aware",
+      "path": [
+        "R1",
+        "R4",
+        "R7",
+        "R8"
+      ],
+      "ping": {
+        "packets_sent": 10,
+        "packets_received": 9,
+        "packet_loss_percent": 10.0,
+        "average_rtt_ms": 92.408
+      },
+      "iperf": {
+        "throughput_mbps": 1.4432894901651263,
+        "retransmits": 43
+      },
+      "repetition": 1
+    },
+    {
+      "route": "risk_aware",
+      "path": [
+        "R1",
+        "R4",
+        "R7",
+        "R8"
+      ],
+      "ping": {
+        "packets_sent": 10,
+        "packets_received": 10,
+        "packet_loss_percent": 0.0,
+        "average_rtt_ms": 91.276
+      },
+      "iperf": {
+        "throughput_mbps": 1.0310035750665656,
+        "retransmits": 22
+      },
+      "repetition": 2
+    },
+    {
+      "route": "traditional",
+      "path": [
+        "R1",
+        "R2",
+        "R4",
+        "R7",
+        "R8"
+      ],
+      "ping": {
+        "packets_sent": 10,
+        "packets_received": 9,
+        "packet_loss_percent": 10.0,
+        "average_rtt_ms": 276.833
+      },
+      "iperf": {
+        "throughput_mbps": 0.3992192849486202,
+        "retransmits": 16
+      },
+      "repetition": 2
+    },
+    {
+      "route": "traditional",
+      "path": [
+        "R1",
+        "R2",
+        "R4",
+        "R7",
+        "R8"
+      ],
+      "ping": {
+        "packets_sent": 10,
+        "packets_received": 8,
+        "packet_loss_percent": 20.0,
+        "average_rtt_ms": 280.486
+      },
+      "iperf": {
+        "throughput_mbps": 0.1996842228143018,
+        "retransmits": 11
+      },
+      "repetition": 3
+    },
+    {
+      "route": "risk_aware",
+      "path": [
+        "R1",
+        "R4",
+        "R7",
+        "R8"
+      ],
+      "ping": {
+        "packets_sent": 10,
+        "packets_received": 7,
+        "packet_loss_percent": 30.0,
+        "average_rtt_ms": 95.246
+      },
+      "iperf": {
+        "throughput_mbps": 1.0310863017157763,
+        "retransmits": 35
+      },
+      "repetition": 3
+    }
+  ],
+  "aggregates": {
+    "traditional": {
+      "runs": 3,
+      "packet_loss_percent": {
+        "mean": 13.333333333333334,
+        "standard_deviation": 4.714045207910317,
+        "minimum": 10.0,
+        "maximum": 20.0
+      },
+      "average_rtt_ms": {
+        "mean": 278.15433333333334,
+        "standard_deviation": 1.6536187253683499,
+        "minimum": 276.833,
+        "maximum": 280.486
+      },
+      "throughput_mbps": {
+        "mean": 0.3327102828314252,
+        "standard_deviation": 0.09406362917012928,
+        "minimum": 0.1996842228143018,
+        "maximum": 0.3992273407313536
+      },
+      "retransmits": {
+        "mean": 13,
+        "standard_deviation": 2.160246899469287,
+        "minimum": 11,
+        "maximum": 16
+      }
+    },
+    "risk_aware": {
+      "runs": 3,
+      "packet_loss_percent": {
+        "mean": 13.333333333333334,
+        "standard_deviation": 12.47219128924647,
+        "minimum": 0.0,
+        "maximum": 30.0
+      },
+      "average_rtt_ms": {
+        "mean": 92.97666666666666,
+        "standard_deviation": 1.6698824975295572,
+        "minimum": 91.276,
+        "maximum": 95.246
+      },
+      "throughput_mbps": {
+        "mean": 1.1684597889824895,
+        "standard_deviation": 0.19433394831239642,
+        "minimum": 1.0310035750665656,
+        "maximum": 1.4432894901651263
+      },
+      "retransmits": {
+        "mean": 33.333333333333336,
+        "standard_deviation": 8.65383665716478,
+        "minimum": 22,
+        "maximum": 43
+      }
+    }
+  },
+  "comparison": {
+    "throughput_gain_mbps": 0.8357495061510642,
+    "throughput_gain_percent": 251.1943721843171,
+    "rtt_reduction_ms": 185.17766666666668,
+    "rtt_reduction_percent": 66.57371267509764,
+    "packet_loss_reduction_points": 0.0,
+    "interpretation": "Three controlled repetitions; this is an emulator result, not evidence of production-network performance."
+  }
+}

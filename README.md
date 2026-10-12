@@ -61,6 +61,27 @@ Phase 2 leakage-aware baselines are complete: row-local cyclical and aggregate f
 
 Phase 3 model integration is complete: a reproducible local model artifact produces LTE degradation scores, and an explicit adapter can apply a selected time-of-day snapshot to routing weights. Because the Kaggle data contains no physical network topology, the included cell-to-link assignment is clearly marked as a deterministic demo mapping rather than a real deployment map. The large trained artifact stays outside Git; its hash and provenance are recorded in `reports/phase3_model_artifact.json`.
 
+Phase 4 Mininet experimentation is complete. A controlled eight-router experiment makes conventional routing cross a severely degraded link while risk-aware routing selects a longer, healthier path. Across three alternating-order WSL2/Mininet runs, risk-aware routing raised mean TCP throughput from 0.333 to 1.168 Mbps (+251%) and reduced mean RTT from 278.2 to 93.0 ms (-66.6%). Mean ping loss was unchanged at 13.3%, so this small experiment does not support a packet-loss improvement claim. The raw trials and environment details are stored in `reports/phase4_mininet_results.json`; these are emulator results, not production-network guarantees.
+
+On Windows, install the emulation dependencies in the existing WSL2 Ubuntu distribution from PowerShell:
+
+```powershell
+$repoPath = (Get-Location).Path
+wsl -d Ubuntu --cd "$repoPath" -- sudo bash scripts/install_mininet_ubuntu.sh
+```
+
+Generate, inspect, and then execute the experiment:
+
+```powershell
+python -m experiments.mininet_plan
+python -m experiments.mininet_runner reports/phase4_mininet_plan.json --dry-run
+$repoPath = (Get-Location).Path
+wsl -d Ubuntu --cd "$repoPath" -- sudo python3 experiments/mininet_runner.py `
+  reports/phase4_mininet_plan.json --output reports/phase4_mininet_results.json
+```
+
+If a Mininet run is interrupted, clean stale virtual interfaces with `wsl -d Ubuntu -- sudo mn -c` before retrying. Mininet requires Linux network namespaces and root access; the official project recommends a VM or native Ubuntu installation.
+
 ## Tech Stack
 
 - Python
@@ -116,6 +137,8 @@ python baseline.py
 python -m telemetry.prepare_lte
 python -m modeling.lte_evaluation
 python -m modeling.lte_model
+python -m experiments.mininet_plan
+python -m experiments.mininet_runner reports/phase4_mininet_plan.json --dry-run
 ```
 
 The tests cover dataset reproducibility, telemetry validation, leakage-safe LTE features, model persistence, topology mutation, routing consistency, failed-link exclusion, and simulation restoration.

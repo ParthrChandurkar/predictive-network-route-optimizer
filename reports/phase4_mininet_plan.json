@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "phase": "phase-4-mininet-routing-experiment",
+  "topology": {
+    "routers": [
+      "R1",
+      "R2",
+      "R3",
+      "R4",
+      "R5",
+      "R6",
+      "R7",
+      "R8"
+    ],
+    "links": [
+      {
+        "source": "R1",
+        "target": "R2",
+        "bandwidth_mbps": 100.0,
+        "source_bandwidth_mbps": 900.0,
+        "delay_ms": 5.0,
+        "loss_percent": 0.5,
+        "distance": 10.0,
+        "routing_risk": 0.95
+      },
+      {
+        "source": "R1",
+        "target": "R3",
+        "bandwidth_mbps": 100.0,
+        "source_bandwidth_mbps": 600.0,
+        "delay_ms": 12.0,
+        "loss_percent": 1.0,
+        "distance": 20.0,
+        "routing_risk": 0.05
+      },
+      {
+        "source": "R1",
+        "target": "R4",
+        "bandwidth_mbps": 100.0,
+        "source_bandwidth_mbps": 300.0,
+        "delay_ms": 25.0,
+        "loss_percent": 3.5,
+        "distance": 28.0,
+        "routing_risk": 0.05
+      },
+      {
+        "source": "R2",
+        "target": "R4",
+        "bandwidth_mbps": 100.0,
+        "source_bandwidth_mbps": 750.0,
+        "delay_ms": 8.0,
+        "loss_percent": 0.8,
+        "distance": 15.0,
+        "routing_risk": 0.05
+      },
+      {
+        "source": "R2",
+        "target": "R5",
+        "bandwidth_mbps": 100.0,
+        "source_bandwidth_mbps": 400.0,
+        "delay_ms": 18.0,
+        "loss_percent": 2.5,
+        "distance": 25.0,
+        "routing_risk": 0.05
+      },
+      {
+        "source": "R3",
+        "target": "R4",
+        "bandwidth_mbps": 100.0,
+        "source_bandwidth_mbps": 500.0,
+        "delay_ms": 15.0,
+        "loss_percent": 1.5,
+        "distance": 12.0,
+        "routing_risk": 0.05
+      },
+      {
+        "source": "R3",
+        "target": "R6",
+        "bandwidth_mbps": 100.0,
+        "source_bandwidth_mbps": 200.0,
+        "delay_ms": 35.0,
+        "loss_percent": 5.0,
+        "distance": 30.0,
+        "routing_risk": 0.05
+      },
+      {
+        "source": "R4",
+        "target": "R7",
+        "bandwidth_mbps": 100.0,
+        "source_bandwidth_mbps": 650.0,
+        "delay_ms": 10.0,
+        "loss_percent": 1.0,
+        "distance": 18.0,
+        "routing_risk": 0.05
+      },
+      {
+        "source": "R5",
+        "target": "R6",
+        "bandwidth_mbps": 100.0,
+        "source_bandwidth_mbps": 150.0,
+        "delay_ms": 45.0,
+        "loss_percent": 8.0,
+        "distance": 35.0,
+        "routing_risk": 0.05
+      },
+      {
+        "source": "R5",
+        "target": "R8",
+        "bandwidth_mbps": 100.0,
+        "source_bandwidth_mbps": 350.0,
+        "delay_ms": 22.0,
+        "loss_percent": 3.0,
+        "distance": 22.0,
+        "routing_risk": 0.05
+      },
+      {
+        "source": "R6",
+        "target": "R7",
+        "bandwidth_mbps": 100.0,
+        "source_bandwidth_mbps": 550.0,
+        "delay_ms": 14.0,
+        "loss_percent": 1.2,
+        "distance": 14.0,
+        "routing_risk": 0.05
+      },
+      {
+        "source": "R7",
+        "target": "R8",
+        "bandwidth_mbps": 100.0,
+        "source_bandwidth_mbps": 800.0,
+        "delay_ms": 6.0,
+        "loss_percent": 0.6,
+        "distance": 10.0,
+        "routing_risk": 0.05
+      }
+    ],
+    "endpoint_hosts": {
+      "source": "hsrc",
+      "destination": "hdst"
+    }
+  },
+  "scenario": {
+    "name": "single-link-severe-degradation",
+    "source_router": "R1",
+    "destination_router": "R8",
+    "impaired_edge": [
+      "R1",
+      "R2"
+    ],
+    "impairment": {
+      "bandwidth_mbps": 5.0,
+      "delay_ms": 100.0,
+      "loss_percent": 5.0
+    },
+    "penalty": 200.0
+  },
+  "routes": {
+    "traditional": {
+      "algorithm": "Traditional Dijkstra",
+      "path": [
+        "R1",
+        "R2",
+        "R4",
+        "R7",
+        "R8"
+      ],
+      "distance": 53,
+      "average_risk": 0.275
+    },
+    "risk_aware": {
+      "algorithm": "AI-Enhanced Dijkstra",
+      "path": [
+        "R1",
+        "R4",
+        "R7",
+        "R8"
+      ],
+      "distance": 56,
+      "average_risk": 0.05
+    }
+  },
+  "measurements": {
+    "ping_count": 10,
+    "iperf_seconds": 5,
+    "iperf_parallel_streams": 1,
+    "repetitions": 3
+  },
+  "interpretation": "This controlled experiment validates routing behavior under emulated link degradation; it does not recreate the Kaggle LTE deployment topology."
+}
