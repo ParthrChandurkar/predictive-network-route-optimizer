@@ -6,10 +6,10 @@ A Streamlit application for comparing conventional shortest-path routing with ML
 
 ## Overview
 
-Traditional routing in this project uses link distance as its edge weight. The failure-aware variants add a penalty based on each link's predicted failure probability:
+Traditional routing in this project uses link distance as its edge weight. Risk-aware variants add a penalty from either the synthetic failure baseline or an explicitly integrated LTE degradation score:
 
 ```text
-ai_weight = distance + (failure_probability * penalty_factor)
+ai_weight = distance + (routing_risk * penalty_factor)
 ```
 
 A higher penalty makes the routing algorithms prefer lower-risk links, even when the resulting path is longer.
@@ -56,6 +56,10 @@ The next version will focus on a validated telemetry pipeline, time-aware ML eva
 Phase 0 stabilization is complete: project settings are centralized, training data is validated, model artifacts are written safely, regression coverage has been expanded, and a reproducible synthetic baseline is stored in `reports/phase0_baseline.json`.
 
 Phase 1 ingestion is complete: the adapter supports Kaggle's semicolon-delimited LTE files, validates labeled and unlabeled splits, produces a canonical schema, records source hashes and data-quality findings, and keeps licensed raw data outside Git. The dataset contains 36,904 training observations and 9,158 test observations across 33 cells.
+
+Phase 2 leakage-aware baselines are complete: row-local cyclical and aggregate features are evaluated with duplicate-safe and held-out-cell cross-validation. On held-out cells, the Random Forest baseline reaches F1 0.832 and ROC-AUC 0.954; these scores describe unusual-behavior detection, not physical failure prediction. Full fold metrics and limitations are stored in `reports/phase2_model_baselines.json`.
+
+Phase 3 model integration is complete: a reproducible local model artifact produces LTE degradation scores, and an explicit adapter can apply a selected time-of-day snapshot to routing weights. Because the Kaggle data contains no physical network topology, the included cell-to-link assignment is clearly marked as a deterministic demo mapping rather than a real deployment map. The large trained artifact stays outside Git; its hash and provenance are recorded in `reports/phase3_model_artifact.json`.
 
 ## Tech Stack
 
@@ -109,15 +113,19 @@ Streamlit normally serves the application at `http://localhost:8501`.
 ```bash
 python -m unittest discover -s tests
 python baseline.py
+python -m telemetry.prepare_lte
+python -m modeling.lte_evaluation
+python -m modeling.lte_model
 ```
 
-The tests cover dataset reproducibility, model persistence, topology mutation, routing consistency, failed-link exclusion, and simulation restoration.
+The tests cover dataset reproducibility, telemetry validation, leakage-safe LTE features, model persistence, topology mutation, routing consistency, failed-link exclusion, and simulation restoration.
 
 ## Current Version Limitations
 
 - The active routing model still uses synthetic link data; real LTE telemetry is ingested but is not yet connected to routing decisions.
 - LTE labels indicate unusual behavior, not confirmed physical link failures.
 - The LTE data contains time of day but no calendar date, preventing a provably chronological split.
+- The LTE cell-to-link mapping is experimental because the source dataset provides no physical topology.
 - The application does not ingest SNMP, NetFlow, router logs, or streaming telemetry.
 - Model predictions support route comparison but do not configure real network devices.
 - Results depend on the selected penalty factor and simulated conditions.

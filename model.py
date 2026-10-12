@@ -152,5 +152,8 @@ def predict_graph_edges(model, scaler, G):
         return
     for u, v, data in G.edges(data=True):
         result = predict_link(model, scaler, data)
+        G[u][v].pop("routing_risk", None)
+        G[u][v].pop("telemetry_cell", None)
         G[u][v]["failure_prob"] = result["failure_prob"]
         G[u][v]["risk_label"]   = result["risk_label"]
+        G[u][v]["risk_source"]  = "synthetic_failure"

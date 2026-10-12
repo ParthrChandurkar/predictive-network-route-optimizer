@@ -1,0 +1,45 @@
+{
+  "phase": "phase-3-deployable-lte-risk-model",
+  "artifact": {
+    "path": "artifacts/lte_degradation_model.pkl",
+    "bytes": 61577788,
+    "sha256": "50901a62d6bf43d19025bb714bfdd8b648ff5aa78ff657df81e69a279318fe12"
+  },
+  "training_rows": 36904,
+  "cells": 33,
+  "class_counts": {
+    "0": 26721,
+    "1": 10183
+  },
+  "features": [
+    "cell_id",
+    "prb_usage_ul",
+    "prb_usage_dl",
+    "mean_throughput_dl",
+    "mean_throughput_ul",
+    "max_throughput_dl",
+    "max_throughput_ul",
+    "mean_ue_dl",
+    "mean_ue_ul",
+    "max_ue_dl",
+    "max_ue_ul",
+    "max_ue_total",
+    "time_sin",
+    "time_cos",
+    "prb_usage_total",
+    "prb_usage_imbalance",
+    "mean_throughput_total",
+    "max_throughput_total",
+    "mean_ue_total",
+    "throughput_headroom_dl",
+    "throughput_headroom_ul"
+  ],
+  "risk_semantics": "Score estimates unusual LTE behavior; it is not a physical-link failure probability.",
+  "evaluation_report": "reports/phase2_model_baselines.json",
+  "reproducibility": {
+    "random_seed": 42,
+    "python": "3.11.9",
+    "pandas": "2.3.3",
+    "scikit_learn": "1.5.0"
+  }
+}

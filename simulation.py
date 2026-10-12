@@ -65,7 +65,9 @@ def network_health(G: nx.Graph) -> dict:
     high   = sum(1 for _, _, d in edges if d.get("risk_label") == "High")
     medium = sum(1 for _, _, d in edges if d.get("risk_label") == "Medium")
     low    = sum(1 for _, _, d in edges if d.get("risk_label") == "Low")
-    avg_r  = float(np.mean([d.get("failure_prob", 0.0) for _, _, d in edges]))
+    avg_r  = float(np.mean([
+        d.get("routing_risk", d.get("failure_prob", 0.0)) for _, _, d in edges
+    ]))
     score  = round(max(0.0, 1.0 - avg_r - (failed / max(total, 1)) * 0.4), 4)
     return {
         "total_links": total, "failed_links": failed,

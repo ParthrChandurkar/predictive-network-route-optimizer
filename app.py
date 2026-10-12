@@ -48,7 +48,12 @@ from simulation      import (apply_stress, apply_random_failures,
 from analytics       import (network_figure, confusion_matrix_fig, feature_importance_fig,
                               route_comparison_fig, health_gauge, risk_pie)
 from telemetry       import TelemetryValidationError, load_lte_dataset
+from modeling.lte_model import load_lte_risk_model, predict_lte_risk
+from integration     import (apply_cell_risk_to_graph, build_demo_edge_cell_mapping,
+                             cell_risk_snapshot)
+from settings        import PHASE2_REPORT_PATH
 from utils           import RISK_COLORS
+import json
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
@@ -68,6 +73,7 @@ defaults = {
     "df_train": None,
     "lte_df":   None,
     "lte_report": None,
+    "lte_routing_summary": None,
     "snap":     None,
 }
 for k, v in defaults.items():
@@ -82,6 +88,11 @@ if st.session_state.model is None:
     st.session_state.scaler = s
 
 G = st.session_state.G
+
+
+@st.cache_resource
+def get_lte_risk_model():
+    return load_lte_risk_model()
 
 
 def refresh_predictions():
@@ -170,7 +181,8 @@ with t_overview:
     df = get_edge_df(G)
     if not df.empty:
         show_cols = [c for c in ["source","target","distance","bandwidth","latency",
-                                  "packet_loss","traffic_load","failure_prob","risk_label","failed"]
+                                  "packet_loss","traffic_load","failure_prob","routing_risk",
+                                  "risk_source","telemetry_cell","risk_label","failed"]
                      if c in df.columns]
         st.dataframe(df[show_cols], use_container_width=True)
 
@@ -188,8 +200,17 @@ with t_model:
     with st.expander("Real LTE telemetry — rebuild preview", expanded=False):
         st.caption(
             "Upload the Kaggle training or test CSV to validate and normalize it. "
-            "Real-data model training will be added after the ingestion contract is stable."
+            "The displayed baseline detects unusual LTE behavior; routing integration comes next."
         )
+        if PHASE2_REPORT_PATH.exists():
+            phase2_report = json.loads(PHASE2_REPORT_PATH.read_text(encoding="utf-8"))
+            held_out = phase2_report["protocols"]["unseen_cell"]["models"]["random_forest"]["aggregate"]
+            st.markdown("#### Held-out-cell baseline")
+            bc1, bc2, bc3 = st.columns(3)
+            bc1.metric("F1", f"{held_out['f1']:.3f}")
+            bc2.metric("ROC-AUC", f"{held_out['roc_auc']:.3f}")
+            bc3.metric("Recall", f"{held_out['recall']:.3f}")
+            st.caption("Cells in each validation fold are absent from that fold's training data.")
         uploaded_lte = st.file_uploader(
             "LTE telemetry CSV",
             type=["csv"],
@@ -213,6 +234,32 @@ with t_model:
                     st.warning(f"Missing values: {report['missing_values']}")
                 for warning in report["warnings"]:
                     st.info(warning)
+                lte_model = get_lte_risk_model()
+                if lte_model is None:
+                    st.warning("Train the local LTE artifact with `python -m modeling.lte_model`.")
+                else:
+                    st.markdown("#### Experimental routing integration")
+                    time_slot = st.selectbox(
+                        "Time-of-day snapshot",
+                        sorted(st.session_state.lte_df["time_of_day"].unique()),
+                        key="lte_time_slot",
+                    )
+                    st.caption(
+                        "The demo assigns LTE cells to abstract links deterministically. "
+                        "It does not claim knowledge of the deployment's physical topology."
+                    )
+                    if st.button("Apply LTE degradation risk to demo topology", key="apply_lte_risk"):
+                        with st.spinner("Scoring telemetry and updating routing weights…"):
+                            scored = predict_lte_risk(lte_model, st.session_state.lte_df)
+                            cell_risks = cell_risk_snapshot(scored, time_slot)
+                            mapping = build_demo_edge_cell_mapping(G, cell_risks)
+                            summary = apply_cell_risk_to_graph(G, cell_risks, mapping)
+                            compute_ai_weights(G)
+                            st.session_state.lte_routing_summary = summary
+                        st.success(
+                            f"Applied {summary['mapped_cells']} cell scores to "
+                            f"{summary['mapped_edges']} links for {time_slot}."
+                        )
 
     left, right = st.columns([1, 2])
 
@@ -361,7 +408,8 @@ with t_builder:
         df_e = get_edge_df(G)
         if not df_e.empty:
             cols = [c for c in ["source","target","distance","bandwidth","latency",
-                                 "packet_loss","traffic_load","failure_prob","risk_label","failed"]
+                                 "packet_loss","traffic_load","failure_prob","routing_risk",
+                                 "risk_source","telemetry_cell","risk_label","failed"]
                     if c in df_e.columns]
             st.dataframe(df_e[cols], use_container_width=True)
 
@@ -373,7 +421,7 @@ with t_routing:
     st.markdown("## Routing Engine")
     st.markdown(
         "**Traditional Dijkstra** minimises distance only. "
-        "**AI-Enhanced Dijkstra** adds `ai_weight = distance + failure_prob × penalty` "
+        "**AI-Enhanced Dijkstra** adds `ai_weight = distance + routing_risk × penalty` "
         "to steer traffic around high-risk links."
     )
     nodes = sorted(G.nodes())
@@ -697,7 +745,8 @@ with t_sim:
         df_sim = get_edge_df(G)
         if not df_sim.empty:
             show = [c for c in ["source","target","traffic_load","latency","packet_loss",
-                                  "failure_prob","risk_label","failed"] if c in df_sim.columns]
+                                  "failure_prob","routing_risk","risk_source","telemetry_cell",
+                                  "risk_label","failed"] if c in df_sim.columns]
             st.markdown("### Live Edge Status")
             st.dataframe(df_sim[show], use_container_width=True)
 
@@ -713,7 +762,7 @@ with t_analytics:
     ac2.metric("Failed",        h["failed_links"])
     ac3.metric("High Risk",     h["high_risk"])
     ac4.metric("Medium Risk",   h["medium_risk"])
-    ac5.metric("Avg Fail Prob", f"{h['avg_risk']*100:.1f}%")
+    ac5.metric("Avg Routing Risk", f"{h['avg_risk']*100:.1f}%")
 
     st.markdown("---")
     r1, r2 = st.columns(2)
@@ -746,8 +795,9 @@ with t_analytics:
     df_a = get_edge_df(G)
     if not df_a.empty:
         cols_a = [c for c in ["source","target","distance","bandwidth","latency",
-                               "packet_loss","traffic_load","failure_prob","risk_label",
-                               "ai_weight","failed"] if c in df_a.columns]
+                               "packet_loss","traffic_load","failure_prob","routing_risk",
+                               "risk_source","telemetry_cell","risk_label","ai_weight","failed"]
+                  if c in df_a.columns]
         st.dataframe(df_a[cols_a], use_container_width=True)
 
     st.markdown("---")

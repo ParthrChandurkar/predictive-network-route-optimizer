@@ -13,6 +13,11 @@ from settings import DEFAULT_ROUTE_PENALTY
 PENALTY_DEFAULT = DEFAULT_ROUTE_PENALTY
 
 
+def _edge_risk(data: dict) -> float:
+    """Prefer an explicitly integrated risk score over the synthetic baseline."""
+    return float(data.get("routing_risk", data.get("failure_prob", 0.0)))
+
+
 def compute_ai_weights(G: nx.Graph, penalty: float = PENALTY_DEFAULT):
     if penalty < 0:
         raise ValueError("penalty must be non-negative")
@@ -20,7 +25,7 @@ def compute_ai_weights(G: nx.Graph, penalty: float = PENALTY_DEFAULT):
         if data.get("failed", False):
             G[u][v]["ai_weight"] = 1e9
         else:
-            G[u][v]["ai_weight"] = data.get("distance", 1) + data.get("failure_prob", 0.0) * penalty
+            G[u][v]["ai_weight"] = data.get("distance", 1) + _edge_risk(data) * penalty
 
 
 def _active_graph(G: nx.Graph) -> nx.Graph:
@@ -41,7 +46,7 @@ def _path_metrics(G: nx.Graph, path: list, algo_name: str, elapsed_ms: float) ->
     for i in range(len(path) - 1):
         u, v = path[i], path[i + 1]
         d = G[u][v] if G.has_edge(u, v) else {}
-        prob = d.get("failure_prob", 0.0)
+        prob = _edge_risk(d)
         risks.append(prob)
         if d.get("risk_label", "Low") in ("Medium", "High"):
             risky += 1

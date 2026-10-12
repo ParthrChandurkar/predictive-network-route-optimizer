@@ -12,6 +12,10 @@ BG   = "#0f172a"
 GRID = "#1e293b"
 TEXT = "#e2e8f0"
 
+
+def _edge_risk(attributes):
+    return attributes.get("routing_risk", attributes.get("failure_prob", 0.0))
+
 def _base(**kw):
     return dict(paper_bgcolor=BG, plot_bgcolor=BG,
                 font=dict(color=TEXT), margin=dict(l=10,r=10,t=50,b=10), **kw)
@@ -39,10 +43,12 @@ def network_figure(G, trad_edges=None, ai_edges=None, title="Network Topology"):
         else:
             col  = RISK_COLORS.get(d.get("risk_label","Low"), RISK_COLORS["Unknown"])
             w,dash = 2,"solid"
+        route_risk = _edge_risk(d)
         ht = (f"<b>{u}↔{v}</b><br>Dist:{d.get('distance',0)}km  BW:{d.get('bandwidth',0)}Mbps<br>"
               f"Latency:{d.get('latency',0)}ms  PktLoss:{d.get('packet_loss',0)}%<br>"
-              f"Traffic:{d.get('traffic_load',0)}%  FailProb:{d.get('failure_prob',0):.2%}<br>"
-              f"Risk:{d.get('risk_label','Low')}  {'❌FAILED' if d.get('failed') else '✅Active'}")
+              f"Traffic:{d.get('traffic_load',0)}%  RouteRisk:{route_risk:.2%}<br>"
+              f"Source:{d.get('risk_source','synthetic_default')}  Risk:{d.get('risk_label','Low')}<br>"
+              f"{'❌FAILED' if d.get('failed') else '✅Active'}")
         traces.append(go.Scatter(x=[x0,x1,None],y=[y0,y1,None],mode="lines",
                                  line=dict(width=w,color=col,dash=dash),
                                  hoverinfo="text",hovertext=ht,showlegend=False))
