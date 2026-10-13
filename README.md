@@ -1,102 +1,138 @@
-# Predictive Network Route Optimizer
+# Predictive Network Degradation & Route Optimizer
 
-A network experimentation platform for comparing conventional shortest-path routing with degradation-aware alternatives. The current version combines real LTE unusual-behavior telemetry, leakage-aware modeling, NetworkX routing, controlled Mininet experiments, OpenTelemetry observability, and a Streamlit network-operations dashboard.
+An evidence-led research system that learns unusual LTE behavior from real telemetry, converts degradation scores into routing costs, and tests risk-aware paths under controlled network impairment.
 
-> **Rebuild in progress:** The project is being redesigned around real network telemetry and time-aware degradation prediction. The existing synthetic workflow remains available as a reproducible demonstration while the new data pipeline is developed.
+[View the landing page](https://predictive-network-route-optimizer.vercel.app) · [Inspect the final evaluation](reports/phase8_final_evaluation.json) · [Review the Mininet measurements](reports/phase4_mininet_results.json)
 
-## Overview
+> The public Next.js site explains the project and includes a guided route-decision demo. The Streamlit application is the complete simulation and network-operations dashboard. Streamlit is currently run locally; the website does not pretend that the full dashboard is hosted.
 
-Traditional routing in this project uses link distance as its edge weight. Risk-aware variants add a penalty from either the synthetic failure baseline or an explicitly integrated LTE degradation score:
+## What the project delivers
 
-```text
-ai_weight = distance + (routing_risk * penalty_factor)
+- A validated adapter for the Kaggle **Anomaly Detection in 4G Cellular Networks** dataset
+- Leakage-aware Random Forest evaluation with LTE cells held out between folds
+- Failure-pattern analysis with spatial, temporal, KPI-shift, and rule evidence
+- Six route variants: conventional and risk-aware Dijkstra, Bellman-Ford, and Floyd-Warshall
+- An eight-workflow Streamlit dashboard for topology editing, scoring, routing, failures, benchmarks, and evidence review
+- A repeated Mininet experiment that measures real emulated traffic with `ping` and `iperf3`
+- OpenTelemetry traces and metrics exported through a Collector to Jaeger and Prometheus
+- A responsive Next.js landing page and guided browser demo deployed on Vercel
+
+## Validated results
+
+| Evidence class | Result | Meaning |
+|---|---:|---|
+| Held-out LTE cells | F1 **0.8323** | Random Forest classification on cell-separated folds |
+| Held-out LTE cells | ROC-AUC **0.9536** | Ranking performance on unseen cells |
+| Validated pattern | **100% precision**, **40.56% coverage** | A narrow `mean_ue_ul` rule matched 1,231 unusual validation rows; it may reflect quantization or label construction |
+| Controlled Mininet | **0.333 → 1.168 Mbps** (**+251.19%**) | Mean TCP throughput across three repetitions per policy |
+| Controlled Mininet | **278.154 → 92.977 ms** (**−66.57%**) | Mean RTT across the same experiment |
+| Controlled Mininet | **13.33% → 13.33% loss** | Packet loss did not improve |
+
+The model metrics, integration checks, and emulator results are consolidated in [`reports/phase8_final_evaluation.json`](reports/phase8_final_evaluation.json). They are not production-network guarantees.
+
+## System architecture
+
+```mermaid
+flowchart LR
+    A[Kaggle LTE telemetry] --> B[Validation + feature pipeline]
+    B --> C[Held-out-cell Random Forest]
+    B --> D[Pattern discovery]
+    C --> E[Degradation scores]
+    E --> F[Deterministic demo cell-to-link mapping]
+    F --> G[NetworkX route reweighting]
+    G --> H[Streamlit operations dashboard]
+    I[Controlled Mininet topology] --> J[Ping + iperf3 trials]
+    J --> H
+    G --> K[OpenTelemetry Collector]
+    J --> K
+    K --> L[Jaeger traces]
+    K --> M[Prometheus metrics]
+    N[Next.js story + guided demo] -. explains and links to .-> H
 ```
 
-A higher penalty makes the routing algorithms prefer lower-risk links, even when the resulting path is longer.
+The LTE dataset contains cellular KPIs, not the physical router graph used by the demo. Cell scores are therefore assigned to graph links with a deterministic demonstration mapping, clearly labeled in both code and UI.
 
-## Features
+## Streamlit dashboard
 
-- Interactive topology creation and editing
-- Dijkstra, Bellman-Ford, and Floyd-Warshall comparisons
-- Random Forest risk prediction using the current synthetic baseline
-- Traffic, latency, packet-loss, and random-failure simulation
-- Traditional and failure-aware path comparison
-- Route risk, model metric, feature importance, and network-health charts
-- Held-out-cell LTE pattern discovery with explicit artifact and causality warnings
-- OpenTelemetry traces in Jaeger and application metrics in Prometheus
+The main application is organized around eight operator workflows:
 
-## Architecture
+| Tab | What it provides |
+|---|---|
+| Network Ops | Live topology, fabric health, route overlays, control-plane posture, and Mininet evidence |
+| Risk Intelligence | Held-out metrics, Kaggle CSV validation, LTE model scoring, and time-slot risk mapping |
+| Pattern Discovery | Cell/hour distributions, KPI shifts, validated rules, and artifact warnings |
+| Topology | Add/remove routers and add/remove/update links |
+| Route Control | Compare distance-only and risk-aware decisions with route provenance |
+| Benchmarks | Compare all six algorithms, final metrics, matrices, and complexity |
+| Failure Lab | Apply stress, random or manual link failures, and restore the topology |
+| Insights | Review observability endpoints, model evidence, route evidence, and link inventory |
 
-`network_builder.py` creates and updates the NetworkX topology. `model.py` trains or loads the model and assigns risk values to links. `routing.py` calculates conventional and failure-aware paths. `simulation.py` applies temporary network conditions, while `analytics.py` builds the Plotly figures used by `app.py`. The optional `observability` package exports application telemetry through the local Collector stack.
+## Run the Streamlit dashboard
 
-The included `network_data.csv` is synthetic and contains bandwidth, latency, packet loss, traffic load, and a binary failure label. Saved model and scaler artifacts are provided for local use.
+Python 3.11 is the tested development version.
 
-## Rebuild Dataset
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m streamlit run app.py
+```
 
-The rebuild will begin with Kaggle's [Anomaly Detection in 4G Cellular Networks](https://www.kaggle.com/competitions/anomaly-detection-in-4g-cellular-networks/data) dataset. It contains telemetry collected from a real LTE deployment across multiple base stations and cells at 15-minute intervals. Its measurements include radio-resource utilization, uplink and downlink throughput, active-user counts, and normal or unusual operating labels.
+On Linux or macOS, activate with `source .venv/bin/activate`. The dashboard opens at `http://localhost:8501` and works with the bundled synthetic baseline. LTE upload/scoring panels require the prepared data and model artifacts described below.
 
-This dataset supports learning real network-degradation patterns rather than reproducing a hand-written synthetic failure rule. It represents cellular-network anomalies, not confirmed physical-link failures, so the rebuild will describe its predictions as **degradation risk** unless stronger failure evidence is available.
+## Prepare the LTE dataset
 
-The Kaggle data is not bundled in this repository. Download access and usage remain subject to the dataset's competition rules.
+Dataset: [Anomaly Detection in 4G Cellular Networks on Kaggle](https://www.kaggle.com/competitions/anomaly-detection-in-4g-cellular-networks)
 
-After accepting the competition rules and configuring the Kaggle CLI, download both files into the ignored raw-data directory:
+Accept the competition rules and authenticate the Kaggle CLI, then run from PowerShell:
 
 ```powershell
 New-Item -ItemType Directory -Path "data/raw/lte" -Force | Out-Null
-kaggle competitions download -c anomaly-detection-in-4g-cellular-networks -f ML-MATT-CompetitionQT2021_train.csv -p data/raw/lte
-kaggle competitions download -c anomaly-detection-in-4g-cellular-networks -f ML-MATT-CompetitionQT2021_test.csv -p data/raw/lte
-Expand-Archive -LiteralPath "data/raw/lte/ML-MATT-CompetitionQT2021_train.csv.zip" -DestinationPath "data/raw/lte" -Force
-python -m telemetry.prepare_lte
+
+kaggle competitions download -c anomaly-detection-in-4g-cellular-networks `
+  -f ML-MATT-CompetitionQT2021_train.csv -p data/raw/lte
+kaggle competitions download -c anomaly-detection-in-4g-cellular-networks `
+  -f ML-MATT-CompetitionQT2021_test.csv -p data/raw/lte
+
+Expand-Archive -LiteralPath "data/raw/lte/ML-MATT-CompetitionQT2021_train.csv.zip" `
+  -DestinationPath "data/raw/lte" -Force
+Expand-Archive -LiteralPath "data/raw/lte/ML-MATT-CompetitionQT2021_test.csv.zip" `
+  -DestinationPath "data/raw/lte" -Force
 ```
 
-The preparation command validates both splits, normalizes their schema, writes canonical files under `data/processed/lte/`, and refreshes `reports/phase1_ingestion.json`. The Streamlit ML Model tab can also validate an uploaded labeled or unlabeled competition CSV. Raw and processed datasets under `data/` are intentionally excluded from Git.
+Build every derived artifact and refresh the final evaluation:
 
-## Rebuild Direction
+```powershell
+python -m telemetry.prepare_lte
+python -m modeling.lte_evaluation
+python -m modeling.lte_model
+python -m analysis.lte_patterns
+python -m evaluation.phase8
+```
 
-The next version will focus on a validated telemetry pipeline, time-aware ML evaluation, and measurable risk-aware routing experiments. Further implementation details will be documented as each rebuild milestone is completed.
+Raw/processed competition data and the trained LTE model are intentionally ignored by Git. Source hashes, validation counts, model provenance, and evaluation outputs are committed under `reports/`.
 
-Phase 0 stabilization is complete: project settings are centralized, training data is validated, model artifacts are written safely, regression coverage has been expanded, and a reproducible synthetic baseline is stored in `reports/phase0_baseline.json`.
+## Run the controlled Mininet experiment
 
-Phase 1 ingestion is complete: the adapter supports Kaggle's semicolon-delimited LTE files, validates labeled and unlabeled splits, produces a canonical schema, records source hashes and data-quality findings, and keeps licensed raw data outside Git. The dataset contains 36,904 training observations and 9,158 test observations across 33 cells.
-
-Phase 2 leakage-aware baselines are complete: row-local cyclical and aggregate features are evaluated with duplicate-safe and held-out-cell cross-validation. On held-out cells, the Random Forest baseline reaches F1 0.832 and ROC-AUC 0.954; these scores describe unusual-behavior detection, not physical failure prediction. Full fold metrics and limitations are stored in `reports/phase2_model_baselines.json`.
-
-Phase 3 model integration is complete: a reproducible local model artifact produces LTE degradation scores, and an explicit adapter can apply a selected time-of-day snapshot to routing weights. Because the Kaggle data contains no physical network topology, the included cell-to-link assignment is clearly marked as a deterministic demo mapping rather than a real deployment map. The large trained artifact stays outside Git; its hash and provenance are recorded in `reports/phase3_model_artifact.json`.
-
-Phase 4 Mininet experimentation is complete. A controlled eight-router experiment makes conventional routing cross a severely degraded link while risk-aware routing selects a longer, healthier path. Across three alternating-order WSL2/Mininet runs, risk-aware routing raised mean TCP throughput from 0.333 to 1.168 Mbps (+251%) and reduced mean RTT from 278.2 to 93.0 ms (-66.6%). Mean ping loss was unchanged at 13.3%, so this small experiment does not support a packet-loss improvement claim. The raw trials and environment details are stored in `reports/phase4_mininet_results.json`; these are emulator results, not production-network guarantees.
-
-Phase 5 observability is complete: routing, LTE inference, and Mininet measurements have opt-in OpenTelemetry instrumentation. A local OpenTelemetry Collector sends traces to Jaeger and exposes metrics for Prometheus. This makes route decisions and experimental performance inspectable without claiming that the demo stack is a production monitoring deployment.
-
-Phase 6 dashboard modernization is complete: the Streamlit interface now uses a responsive network-operations layout with live fabric status, severity-aware link inventory, clearer risk provenance, route recommendations, a recurring LTE time-slot signal, Mininet evidence, observability access, and dedicated control-plane workflows. The presentation remains a research dashboard rather than a production NOC product.
-
-Phase 7 pattern discovery is complete. After removing 103 exact duplicates, unusual labels remain broadly distributed across 33 cells and show only modest hour-of-day variation. A shallow rule model discovered patterns on one set of cells and validated them on disjoint cells. Its strongest signature—`mean_ue_ul > 0.0100` and `<= 1.0110`—covered 1,231 validation observations with 100% unusual-label precision and 40.6% recall coverage. That unusually sharp boundary is treated as a possible measurement-quantization or label-construction artifact, not a physical failure mechanism. Full cell, time, KPI-shift, uncertainty, and held-out-rule evidence is stored in `reports/phase7_lte_patterns.json`.
-
-Phase 8 final integration and evaluation is complete. A single reproducible command now validates evidence continuity across Phases 1-7, checks all six routing variants on the same degraded-link scenario, runs an LTE-score-to-route integration demonstration, verifies the saved model hash, and consolidates the held-out LTE, pattern, Mininet, and observability results. All seven evidence checks pass. The generated artifact is `reports/phase8_final_evaluation.json`; its evidence classes deliberately keep held-out data, synthetic mapping, and controlled emulation claims separate. See [`docs/phase8-evaluation.md`](docs/phase8-evaluation.md) for the workflow and claim boundaries.
-
-The remaining roadmap has one milestone. Phase 9 will add a Next.js public project story and browser-based route simulation deployed on Vercel, with the Python Streamlit research dashboard hosted separately and linked from the public site; the browser simulation will not be presented as a live Mininet run.
-
-On Windows, install the emulation dependencies in the existing WSL2 Ubuntu distribution from PowerShell:
+Mininet requires Linux network namespaces and root privileges. On Windows, install Ubuntu under WSL2, then use the included installer and experiment plan:
 
 ```powershell
 $repoPath = (Get-Location).Path
 wsl -d Ubuntu --cd "$repoPath" -- sudo bash scripts/install_mininet_ubuntu.sh
-```
 
-Generate, inspect, and then execute the experiment:
-
-```powershell
 python -m experiments.mininet_plan
 python -m experiments.mininet_runner reports/phase4_mininet_plan.json --dry-run
-$repoPath = (Get-Location).Path
+
 wsl -d Ubuntu --cd "$repoPath" -- sudo python3 experiments/mininet_runner.py `
   reports/phase4_mininet_plan.json --output reports/phase4_mininet_results.json
 ```
 
-If a Mininet run is interrupted, clean stale virtual interfaces with `wsl -d Ubuntu -- sudo mn -c` before retrying. Mininet requires Linux network namespaces and root access; the official project recommends a VM or native Ubuntu installation.
+If a run is interrupted, clean stale interfaces with `wsl -d Ubuntu -- sudo mn -c`. The committed report records the WSL2 kernel, Mininet and `iperf3` versions, raw trials, route ordering, and aggregate results.
 
-## Local Observability
+## Run observability locally
 
-Start the Collector, Jaeger, and Prometheus stack with Docker Desktop running:
+With Docker Desktop running:
 
 ```powershell
 docker compose -f compose.observability.yaml up -d
@@ -105,90 +141,60 @@ $env:OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4318"
 python -m streamlit run app.py
 ```
 
-Use the application normally, then inspect traces at `http://localhost:16686` and metrics at `http://localhost:9090`. To emit a deterministic verification batch without opening Streamlit:
+- Jaeger: `http://localhost:16686`
+- Prometheus: `http://localhost:9090`
+- OpenTelemetry Collector health: `http://localhost:13133`
+
+Routing decisions, LTE inference, and Mininet trial measurements are instrumented. Stop the stack with `docker compose -f compose.observability.yaml down`; Prometheus data stays in its named volume unless you explicitly add `--volumes`.
+
+## Run the landing page
+
+The Next.js application includes the project story and a deliberately bounded `/demo` route. The browser demo uses fixed scenarios to explain route reweighting; it does not run the LTE model, Mininet, observability stack, or the full Streamlit workflow.
 
 ```powershell
-python scripts/emit_observability_demo.py
+Set-Location web
+npm ci
+npm run dev
 ```
 
-Stop the local stack with `docker compose -f compose.observability.yaml down`. Prometheus data is kept in a named Docker volume; add `--volumes` only when you intentionally want to delete it.
+Open `http://localhost:3000`. If Streamlit is later hosted separately, set `NEXT_PUBLIC_STREAMLIT_URL` before building; otherwise dashboard buttons lead to these local setup instructions.
 
-## Tech Stack
-
-- Python
-- Streamlit and Plotly
-- NetworkX
-- pandas and NumPy
-- scikit-learn
-- OpenTelemetry, Jaeger, and Prometheus
-- Python `unittest`
-
-## Getting Started
-
-Prerequisites: Python 3.9 or newer and pip.
-
-```bash
-python -m venv .venv
-```
-
-Activate the virtual environment on Windows PowerShell:
+## Verification
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
-On macOS or Linux:
-
-```bash
-source .venv/bin/activate
-```
-
-Install dependencies and start the dashboard:
-
-```bash
-python -m pip install -r requirements.txt
-python -m streamlit run app.py
-```
-
-Streamlit normally serves the application at `http://localhost:8501`.
-
-## Usage
-
-1. Train or inspect the failure model from the ML Model tab.
-2. Review or edit the topology in the Overview and Builder tabs.
-3. Select a source and destination in the Routing tab.
-4. Compare conventional and failure-aware paths.
-5. Apply degraded conditions in the Simulation tab and calculate the routes again.
-6. Review model and network results in the Analytics tab.
-
-## Testing
-
-```bash
 python -m unittest discover -s tests
-python baseline.py
-python -m telemetry.prepare_lte
-python -m modeling.lte_evaluation
-python -m modeling.lte_model
-python -m analysis.lte_patterns
-python -m evaluation.phase8
-python -m experiments.mininet_plan
-python -m experiments.mininet_runner reports/phase4_mininet_plan.json --dry-run
-python scripts/emit_observability_demo.py
+
+Set-Location web
+npm run typecheck
+npm test
+npm run build
 ```
 
-The tests cover dataset reproducibility, telemetry validation, leakage-safe LTE features, held-out-cell pattern discovery, model persistence, final evidence consolidation, topology mutation, routing consistency, failed-link exclusion, simulation restoration, dashboard state, and the opt-in observability boundary.
+## Repository map
 
-## Current Version Limitations
+| Path | Responsibility |
+|---|---|
+| `app.py`, `ui/` | Streamlit simulation and operations UI |
+| `telemetry/` | Kaggle schema validation and ingestion |
+| `modeling/` | Leakage-aware evaluation and LTE model artifact |
+| `analysis/` | Failure-pattern discovery |
+| `integration/` | LTE-score to graph-risk demonstration mapping |
+| `routing.py`, `network_builder.py`, `simulation.py` | Graph algorithms, topology state, and failures |
+| `experiments/` | Mininet plan and measurement runner |
+| `observability/`, `compose.observability.yaml` | OTel Collector, Jaeger, and Prometheus stack |
+| `evaluation/`, `reports/` | Cross-phase validation and committed evidence |
+| `web/` | Vercel-hosted Next.js landing page |
+| `tests/` | Unit and dashboard regression tests |
 
-- The dashboard can apply LTE degradation scores to route comparison, but its cell-to-link mapping is only a deterministic demonstration.
-- LTE labels indicate unusual behavior, not confirmed physical link failures.
-- The LTE data contains time of day but no calendar date, preventing a provably chronological split.
-- The strongest interpretable pattern uses a narrow KPI boundary that may reflect data construction or measurement quantization.
-- The LTE cell-to-link mapping is experimental because the source dataset provides no physical topology.
-- The application does not ingest SNMP, NetFlow, router logs, or streaming telemetry.
-- Model predictions support route comparison but do not configure real network devices.
-- Results depend on the selected penalty factor and simulated conditions.
+## Claim boundaries
+
+- LTE labels represent **unusual cellular behavior**, not confirmed physical-link failures.
+- The dataset exposes time of day but no calendar date, so full chronological ordering cannot be reconstructed.
+- The LTE cell-to-link relationship is a deterministic integration demo, not a discovered physical topology.
+- Mininet results come from three controlled repetitions per policy and should not be generalized to production networks.
+- The validated KPI signature is predictive in the held-out sample, but its sharp boundary may be a dataset artifact rather than a causal failure mechanism.
+- This system recommends and compares routes; it does not configure physical routers.
 
 ## License
 
-No license file is included. Add one before redistributing or using the project commercially.
+No license file is currently included. Add one before redistributing or using the project commercially.

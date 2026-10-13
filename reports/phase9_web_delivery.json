@@ -1,0 +1,42 @@
+{
+  "phase": "phase-9-public-web-delivery",
+  "status": "complete-landing-deployed-streamlit-local",
+  "deployed_at": "2026-10-13",
+  "production_url": "https://predictive-network-route-optimizer.vercel.app",
+  "platform": "Vercel",
+  "application": {
+    "framework": "Next.js 16.4.0",
+    "runtime": "React 19.3.0",
+    "source_directory": "web",
+    "deployment_id": "dpl_A5a8anHNcro4TmGTv8LQYCzheUph",
+    "responsibility": "Public project presentation and bounded route-decision demo; the complete research simulation remains in Streamlit.",
+    "experience": [
+      "evidence-led project landing page",
+      "responsive network-operations visual system",
+      "guided client-side route decision demo",
+      "static preview of the eight Streamlit workflows",
+      "clear links to source and dashboard setup",
+      "explicit held-out, integration-demo, and Mininet claim boundaries"
+    ]
+  },
+  "verification": {
+    "typescript": "passed",
+    "browser_route_logic_tests": "3 passed",
+    "production_build": "passed",
+    "streamlit_app_test": "8 tabs and 4 critical interactions passed without exceptions",
+    "python_tests": "56 passed",
+    "vercel_deployment": "ready",
+    "public_http_status": 200,
+    "authentication_required": false
+  },
+  "remaining": [
+    "Optionally host the Streamlit dashboard on a suitable Python application platform.",
+    "After hosting Streamlit, set NEXT_PUBLIC_STREAMLIT_URL and redeploy the landing page.",
+    "Optionally connect the Vercel project to GitHub when repository access is available for automatic deployments."
+  ],
+  "limitations": [
+    "The Next.js demo executes bounded path calculations with fixed scenarios; it does not run LTE inference, Mininet, or physical network traffic.",
+    "The LTE cell-to-link relationship is a deterministic demonstration mapping, not a physical LTE topology.",
+    "Dashboard calls to action use repository setup instructions until Streamlit is separately hosted."
+  ]
+}

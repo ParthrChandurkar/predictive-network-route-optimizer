@@ -238,7 +238,7 @@ def render_app_header(
         ]
     )
     st.markdown(
-        '<div class="noc-header"><div class="noc-eyebrow">Network intelligence platform // phase 6</div>'
+        '<div class="noc-header"><div class="noc-eyebrow">Network research platform // validated build</div>'
         '<div class="noc-title">Predictive Route Operations</div>'
         '<p class="noc-subtitle">Inspect topology health, detect degradation risk, compare path decisions, '
         f'and validate routing behavior from one control surface.</p><div class="status-strip">{chips}</div></div>',

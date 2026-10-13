@@ -1,6 +1,7 @@
-"""
-app.py — AI-Based Network Routing Optimizer  (Enhanced)
-Tabs: Overview | ML Model | Builder | Routing | Algorithm Comparison | Simulation | Analytics | Novelty
+"""Streamlit control surface for the Predictive Network Degradation & Route Optimizer.
+
+The eight workflows cover operations, LTE risk, pattern discovery, topology editing,
+route control, algorithm benchmarks, controlled failures, and system insights.
 """
 import streamlit as st
 
@@ -166,6 +167,7 @@ with st.sidebar:
         ("Risk source", "LTE demo" if st.session_state.lte_routing_summary else "Synthetic baseline"),
         ("Trace export", "OTLP active" if OBSERVABILITY.enabled else "Disabled"),
     ])
+    st.info("This Streamlit application is the project’s interactive simulation and operations interface.")
     st.caption("Research environment · decisions do not configure physical routers")
 
 
