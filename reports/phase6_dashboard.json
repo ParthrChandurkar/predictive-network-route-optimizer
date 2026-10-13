@@ -34,7 +34,7 @@
   },
   "limitations": [
     "The LTE source has time of day but no calendar date, so the timeline is not chronological.",
-    "The dashboard is a research control surface, not a production NOC or device controller.",
+    "The dashboard is an evaluation control surface, not a production NOC or device controller.",
     "Jaeger and Prometheus links require the local Compose stack to be running."
   ]
 }

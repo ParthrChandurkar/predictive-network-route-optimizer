@@ -4,7 +4,7 @@
 [![Release](https://img.shields.io/github/v/release/ParthrChandurkar/predictive-network-route-optimizer)](https://github.com/ParthrChandurkar/predictive-network-route-optimizer/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-48e5b5.svg)](LICENSE)
 
-An evidence-led research system that learns unusual LTE behavior from real telemetry, converts degradation scores into routing costs, and tests risk-aware paths under controlled network impairment.
+An evidence-led network simulation platform that learns unusual LTE behavior from real telemetry, converts degradation scores into routing costs, and tests risk-aware paths under controlled network impairment.
 
 [View the landing page](https://predictive-network-route-optimizer.vercel.app) · [Try the browser demo](https://predictive-network-route-optimizer.vercel.app/demo) · [Inspect the final evaluation](reports/phase8_final_evaluation.json)
 

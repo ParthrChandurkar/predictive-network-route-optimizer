@@ -1,6 +1,6 @@
-# v1.0.0 — Research system release
+# v1.0.0 — Complete system release
 
-This release completes the Predictive Network Degradation & Route Optimizer as a reproducible portfolio and research project.
+This release completes the Predictive Network Degradation & Route Optimizer as a reproducible portfolio and network simulation project.
 
 ## Included
 

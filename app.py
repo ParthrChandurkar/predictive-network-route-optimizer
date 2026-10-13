@@ -168,7 +168,7 @@ with st.sidebar:
         ("Trace export", "OTLP active" if OBSERVABILITY.enabled else "Disabled"),
     ])
     st.info("This Streamlit application is the project’s interactive simulation and operations interface.")
-    st.caption("Research environment · decisions do not configure physical routers")
+    st.caption("Simulation environment · decisions do not configure physical routers")
 
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────

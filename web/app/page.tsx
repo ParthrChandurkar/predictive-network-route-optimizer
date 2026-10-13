@@ -38,7 +38,7 @@ export default function Home() {
 
       <section className="hero section-shell" id="top">
         <div className="hero-copy">
-          <div className="eyebrow"><span className="live-pulse" /> Network degradation research system</div>
+          <div className="eyebrow"><span className="live-pulse" /> Network degradation simulation platform</div>
           <h1>Detect weak signals.<br /><em>Route around risk.</em></h1>
           <p className="hero-lead">An evidence-led platform that turns real LTE telemetry into degradation scores, compares risk-aware paths, and measures the outcome under controlled network impairment.</p>
           <div className="hero-actions"><a className="button primary" href="/demo">Try the live demo <span>→</span></a><a className="button secondary" href={dashboardUrl} target="_blank" rel="noreferrer">{hasHostedDashboard ? "Launch Streamlit" : "Run Streamlit locally"} <span>↗</span></a></div>
@@ -66,7 +66,7 @@ export default function Home() {
 
       <section className="architecture-section">
         <div className="section-shell architecture-grid">
-          <div><span className="kicker">ARCHITECTURE</span><h2>One decision path.<br />Three evidence classes.</h2><p>Held-out model results, a guided browser demonstration, and emulator measurements stay visibly separate. That boundary keeps the research prototype useful and honest.</p><a href={githubUrl} target="_blank" rel="noreferrer" className="text-link">Inspect the implementation <span>↗</span></a></div>
+          <div><span className="kicker">ARCHITECTURE</span><h2>One decision path.<br />Three evidence classes.</h2><p>Held-out model results, a guided browser demonstration, and emulator measurements stay visibly separate. That boundary keeps the prototype useful and honest.</p><a href={githubUrl} target="_blank" rel="noreferrer" className="text-link">Inspect the implementation <span>↗</span></a></div>
           <div className="architecture-map">
             <div className="arch-row"><div className="arch-node"><small>INPUT</small><b>LTE telemetry</b><span>33 cells · 15 min slots</span></div><i>→</i><div className="arch-node"><small>MODEL</small><b>Degradation risk</b><span>Held-out cell evaluation</span></div></div>
             <div className="arch-spine"><span>↓</span></div>
@@ -77,9 +77,9 @@ export default function Home() {
       </section>
 
       <section className="dashboard-section section-shell" id="dashboard">
-        <div className="section-heading"><div><span className="kicker">STREAMLIT CONTROL SURFACE</span><h2>One dashboard.<br />Eight research workflows.</h2></div><p>The web demo explains a single route decision. The Python dashboard is the detailed implementation where the network is inspected, changed, stressed, scored, and compared.</p></div>
+        <div className="section-heading"><div><span className="kicker">STREAMLIT CONTROL SURFACE</span><h2>One dashboard.<br />Eight operational workflows.</h2></div><p>The web demo explains a single route decision. The Python dashboard is the detailed implementation where the network is inspected, changed, stressed, scored, and compared.</p></div>
         <div className="dashboard-preview">
-          <div className="dashboard-bar"><span><i /> STREAMLIT / NETWORK OPERATIONS</span><b>RESEARCH MODE</b></div>
+          <div className="dashboard-bar"><span><i /> STREAMLIT / NETWORK OPERATIONS</span><b>SIMULATION MODE</b></div>
           <div className="dashboard-body">
             <div className="dashboard-sidebar"><span>CONTROL PLANE</span><b>8 routers</b><b>11 links</b><b>6 algorithms</b><small>Interactive state is managed by the Streamlit application.</small></div>
             <div className="dashboard-canvas">
@@ -99,7 +99,7 @@ export default function Home() {
       </section>
 
       <section className="findings-section section-shell">
-        <div className="section-heading"><div><span className="kicker">WHAT THE DATA SAID</span><h2>Useful results,<br />without inflated claims.</h2></div><p>Real failure research is often about finding the boundary of what the data can support. These are the strongest findings—and the caveats attached to them.</p></div>
+        <div className="section-heading"><div><span className="kicker">WHAT THE DATA SAID</span><h2>Useful results,<br />without inflated claims.</h2></div><p>Failure analysis depends on understanding what the data can actually support. These are the strongest findings—and the caveats attached to them.</p></div>
         <div className="findings-grid">
           <article className="finding-primary"><div className="finding-index">01 / HELD-OUT PATTERN</div><strong>100%</strong><h3>unusual-label precision</h3><p>A narrow <code>mean_ue_ul</code> signature covered 40.6% of unusual validation rows on disjoint cells.</p><div className="warning-line">Possible quantization or label-construction artifact—not a causal failure mechanism.</div></article>
           <article><div className="finding-index">02 / DISTRIBUTION</div><h3>No single failing cell cluster.</h3><p>Labels remained broadly distributed across all 33 cells, with only a 5.67-point cell-rate spread after deduplication.</p></article>
@@ -111,7 +111,7 @@ export default function Home() {
 
       <section className="cta-section section-shell"><div><span className="kicker">EXPLORE THE SYSTEM</span><h2>Try the decision.<br />Then inspect the evidence.</h2></div><div className="cta-actions"><a className="button primary" href="/demo">Open live demo <span>→</span></a><a className="button secondary" href={dashboardUrl} target="_blank" rel="noreferrer">{hasHostedDashboard ? "Launch dashboard" : "Clone & run Streamlit"} <span>↗</span></a></div></section>
 
-      <footer><div className="section-shell footer-inner"><a className="brand" href="#top"><span className="brand-mark">N</span><span>NetRoute <b>Intelligence</b></span></a><p>Research prototype · no physical device control</p><p>Built by Parth Chandurkar</p></div></footer>
+      <footer><div className="section-shell footer-inner"><a className="brand" href="#top"><span className="brand-mark">N</span><span>NetRoute <b>Intelligence</b></span></a><p>Validated prototype · no physical device control</p><p>Built by Parth Chandurkar</p></div></footer>
     </main>
   );
 }

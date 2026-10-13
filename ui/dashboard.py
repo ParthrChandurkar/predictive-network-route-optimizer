@@ -234,11 +234,11 @@ def render_app_header(
             _chip("Network", state, severity),
             _chip("Risk engine", "Ready" if model_loaded else "Standby", "healthy" if model_loaded else "warning"),
             _chip("Telemetry", "OTel live" if observability_enabled else "Local only", "healthy" if observability_enabled else "offline"),
-            _chip("Environment", "Research lab"),
+            _chip("Environment", "Simulation lab"),
         ]
     )
     st.markdown(
-        '<div class="noc-header"><div class="noc-eyebrow">Network research platform // validated build</div>'
+        '<div class="noc-header"><div class="noc-eyebrow">Network intelligence platform // validated build</div>'
         '<div class="noc-title">Predictive Route Operations</div>'
         '<p class="noc-subtitle">Inspect topology health, detect degradation risk, compare path decisions, '
         f'and validate routing behavior from one control surface.</p><div class="status-strip">{chips}</div></div>',

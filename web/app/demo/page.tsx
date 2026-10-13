@@ -36,7 +36,7 @@ export default function DemoPage() {
 
       <section className="full-lab-section" id="full-lab">
         <div className="section-shell full-lab-grid">
-          <div><span className="kicker">FULL IMPLEMENTATION</span><h2>The demo explains one decision.<br />Streamlit runs the research system.</h2></div>
+          <div><span className="kicker">FULL IMPLEMENTATION</span><h2>The demo explains one decision.<br />Streamlit runs the complete simulation.</h2></div>
           <div className="full-lab-copy"><p>Clone the repository and run Streamlit locally for the complete experience: real LTE CSV validation and scoring, pattern discovery, topology editing, six routing variants, failure injection, Mininet evidence, and OpenTelemetry links.</p><div className="full-lab-actions"><a className="button primary" href={`${githubUrl}#run-the-streamlit-dashboard`} target="_blank" rel="noreferrer">Clone & run Streamlit <span>↗</span></a><Link className="button secondary" href="/">Read the project story <span>←</span></Link></div></div>
         </div>
       </section>
