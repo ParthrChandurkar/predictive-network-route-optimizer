@@ -23,6 +23,7 @@ PHASE2_REPORT_PATH = PROJECT_ROOT / "reports" / "phase2_model_baselines.json"
 LTE_MODEL_PATH = PROJECT_ROOT / "artifacts" / "lte_degradation_model.pkl"
 PHASE3_REPORT_PATH = PROJECT_ROOT / "reports" / "phase3_model_artifact.json"
 PHASE7_REPORT_PATH = PROJECT_ROOT / "reports" / "phase7_lte_patterns.json"
+PHASE8_REPORT_PATH = PROJECT_ROOT / "reports" / "phase8_final_evaluation.json"
 MININET_PLAN_PATH = PROJECT_ROOT / "reports" / "phase4_mininet_plan.json"
 MININET_RESULTS_PATH = PROJECT_ROOT / "reports" / "phase4_mininet_results.json"
 

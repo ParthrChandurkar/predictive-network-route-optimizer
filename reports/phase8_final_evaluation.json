@@ -1,0 +1,299 @@
+{
+  "schema_version": 1,
+  "phase": "phase-8-final-integration-and-evaluation",
+  "status": "complete",
+  "headline": {
+    "held_out_cell_f1": 0.8322891316729664,
+    "held_out_cell_roc_auc": 0.9536330884126647,
+    "mininet_throughput_gain_percent": 251.1943721843171,
+    "mininet_rtt_reduction_percent": 66.57371267509764,
+    "mininet_packet_loss_reduction_points": 0.0,
+    "validated_pattern_precision": 1.0,
+    "validated_pattern_coverage": 0.4056013179571664
+  },
+  "evidence_classes": {
+    "held_out_data": "LTE classification and pattern metrics use group-separated cells.",
+    "integration_demo": "LTE scores drive routes through a deterministic, non-physical cell-to-link mapping.",
+    "controlled_emulation": "Mininet measurements come from three repeated WSL2 experiments."
+  },
+  "controlled_routing": {
+    "scenario": "single-link-severe-degradation",
+    "source": "R1",
+    "destination": "R8",
+    "impaired_edge": [
+      "R1",
+      "R2"
+    ],
+    "penalty": 200.0,
+    "routes": {
+      "dijkstra": {
+        "algorithm": "Traditional Dijkstra",
+        "found": true,
+        "path": [
+          "R1",
+          "R2",
+          "R4",
+          "R7",
+          "R8"
+        ],
+        "distance": 53,
+        "hops": 4,
+        "average_risk": 0.275,
+        "objective_cost": 53
+      },
+      "bellman_ford": {
+        "algorithm": "Bellman-Ford",
+        "found": true,
+        "path": [
+          "R1",
+          "R2",
+          "R4",
+          "R7",
+          "R8"
+        ],
+        "distance": 53,
+        "hops": 4,
+        "average_risk": 0.275,
+        "objective_cost": 53
+      },
+      "floyd_warshall": {
+        "algorithm": "Floyd-Warshall",
+        "found": true,
+        "path": [
+          "R1",
+          "R2",
+          "R4",
+          "R7",
+          "R8"
+        ],
+        "distance": 53,
+        "hops": 4,
+        "average_risk": 0.275,
+        "objective_cost": 53
+      },
+      "risk_aware_dijkstra": {
+        "algorithm": "AI-Enhanced Dijkstra",
+        "found": true,
+        "path": [
+          "R1",
+          "R4",
+          "R7",
+          "R8"
+        ],
+        "distance": 56,
+        "hops": 3,
+        "average_risk": 0.05,
+        "objective_cost": 86.0
+      },
+      "risk_aware_bellman_ford": {
+        "algorithm": "AI Bellman-Ford",
+        "found": true,
+        "path": [
+          "R1",
+          "R4",
+          "R7",
+          "R8"
+        ],
+        "distance": 56,
+        "hops": 3,
+        "average_risk": 0.05,
+        "objective_cost": 86.0
+      },
+      "risk_aware_floyd_warshall": {
+        "algorithm": "AI Floyd-Warshall",
+        "found": true,
+        "path": [
+          "R1",
+          "R4",
+          "R7",
+          "R8"
+        ],
+        "distance": 56,
+        "hops": 3,
+        "average_risk": 0.05,
+        "objective_cost": 86.0
+      }
+    },
+    "checks": {
+      "all_routes_found": true,
+      "traditional_algorithms_agree": true,
+      "risk_aware_algorithms_agree": true,
+      "risk_aware_route_differs": true,
+      "risk_aware_route_avoids_impaired_edge": true
+    }
+  },
+  "lte_routing_integration": {
+    "evidence_class": "integration_demo",
+    "time_of_day": "00:00",
+    "observations": 381,
+    "cells": 33,
+    "score_summary": {
+      "minimum": 0.20033697735137979,
+      "mean": 0.2918575998676755,
+      "maximum": 0.39384685020783883
+    },
+    "mapping": {
+      "mapped_edges": 12,
+      "mapped_cells": 12,
+      "mean_degradation_score": 0.30129380656835386,
+      "mapping_semantics": "Deterministic demo mapping; not a physical LTE topology."
+    },
+    "routes": {
+      "dijkstra": {
+        "algorithm": "Traditional Dijkstra",
+        "found": true,
+        "path": [
+          "R1",
+          "R2",
+          "R4",
+          "R7",
+          "R8"
+        ],
+        "distance": 53,
+        "hops": 4,
+        "average_risk": 0.3558,
+        "objective_cost": 53
+      },
+      "bellman_ford": {
+        "algorithm": "Bellman-Ford",
+        "found": true,
+        "path": [
+          "R1",
+          "R2",
+          "R4",
+          "R7",
+          "R8"
+        ],
+        "distance": 53,
+        "hops": 4,
+        "average_risk": 0.3558,
+        "objective_cost": 53
+      },
+      "floyd_warshall": {
+        "algorithm": "Floyd-Warshall",
+        "found": true,
+        "path": [
+          "R1",
+          "R2",
+          "R4",
+          "R7",
+          "R8"
+        ],
+        "distance": 53,
+        "hops": 4,
+        "average_risk": 0.3558,
+        "objective_cost": 53
+      },
+      "risk_aware_dijkstra": {
+        "algorithm": "AI-Enhanced Dijkstra",
+        "found": true,
+        "path": [
+          "R1",
+          "R2",
+          "R5",
+          "R8"
+        ],
+        "distance": 57,
+        "hops": 3,
+        "average_risk": 0.288,
+        "objective_cost": 229.81
+      },
+      "risk_aware_bellman_ford": {
+        "algorithm": "AI Bellman-Ford",
+        "found": true,
+        "path": [
+          "R1",
+          "R2",
+          "R5",
+          "R8"
+        ],
+        "distance": 57,
+        "hops": 3,
+        "average_risk": 0.288,
+        "objective_cost": 229.81
+      },
+      "risk_aware_floyd_warshall": {
+        "algorithm": "AI Floyd-Warshall",
+        "found": true,
+        "path": [
+          "R1",
+          "R2",
+          "R5",
+          "R8"
+        ],
+        "distance": 57,
+        "hops": 3,
+        "average_risk": 0.288,
+        "objective_cost": 229.81
+      }
+    },
+    "route_changed": true,
+    "average_path_risk_reduction": 0.06780000000000003,
+    "distance_overhead": 4,
+    "limitation": "LTE cells are assigned to graph links deterministically for demonstration; the dataset does not contain this physical topology."
+  },
+  "measured_mininet": {
+    "environment": {
+      "kernel": "6.18.40.1-microsoft-standard-WSL2",
+      "mininet": "2.3.0",
+      "iperf3": "iperf 3.20 (cJSON 1.7.15)"
+    },
+    "repetitions_per_policy": 3,
+    "comparison": {
+      "throughput_gain_mbps": 0.8357495061510642,
+      "throughput_gain_percent": 251.1943721843171,
+      "rtt_reduction_ms": 185.17766666666668,
+      "rtt_reduction_percent": 66.57371267509764,
+      "packet_loss_reduction_points": 0.0,
+      "interpretation": "Three controlled repetitions; this is an emulator result, not evidence of production-network performance."
+    }
+  },
+  "observability": {
+    "architecture": {
+      "application_export": "OTLP/HTTP",
+      "collector": "OpenTelemetry Collector Contrib",
+      "trace_backend": "Jaeger",
+      "metrics_backend": "Prometheus"
+    },
+    "verified_scope": [
+      "route calculations",
+      "LTE model inference",
+      "Mininet trial measurements"
+    ]
+  },
+  "verification": {
+    "checks": {
+      "all_phase_reports_present": true,
+      "ingestion_model_row_count_matches": true,
+      "pattern_source_row_count_matches": true,
+      "model_artifact_hash_matches": true,
+      "controlled_routing_checks_pass": true,
+      "lte_integration_routes_found": true,
+      "mininet_has_repeated_trials": true
+    },
+    "passed": 7,
+    "total": 7
+  },
+  "sources": {
+    "ingestion": "reports/phase1_ingestion.json",
+    "model_evaluation": "reports/phase2_model_baselines.json",
+    "model_artifact": "reports/phase3_model_artifact.json",
+    "mininet": "reports/phase4_mininet_results.json",
+    "observability": "reports/phase5_observability.json",
+    "dashboard": "reports/phase6_dashboard.json",
+    "pattern_discovery": "reports/phase7_lte_patterns.json"
+  },
+  "reproducibility": {
+    "random_seed": 42,
+    "lte_data": "data/processed/lte/train.csv",
+    "lte_model": "artifacts/lte_degradation_model.pkl",
+    "command": "python -m evaluation.phase8"
+  },
+  "claim_boundaries": [
+    "LTE labels represent unusual behavior, not confirmed physical-link failures.",
+    "The LTE dataset has no physical mapping to the demonstration topology.",
+    "Mininet results are controlled emulator evidence, not production guarantees.",
+    "Three Mininet repetitions are sufficient for a demo, not broad statistical generalization.",
+    "The sharp validated KPI rule may reflect quantization or label construction rather than causality."
+  ]
+}

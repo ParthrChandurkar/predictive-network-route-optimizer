@@ -31,7 +31,7 @@ from modeling.lte_model import load_lte_risk_model, predict_lte_risk
 from integration     import (apply_cell_risk_to_graph, build_demo_edge_cell_mapping,
                              cell_risk_snapshot)
 from settings        import (MININET_RESULTS_PATH, PHASE2_REPORT_PATH,
-                             PHASE7_REPORT_PATH)
+                             PHASE7_REPORT_PATH, PHASE8_REPORT_PATH)
 from utils           import RISK_COLORS
 from observability   import configure_observability
 from ui              import (apply_dashboard_theme, render_app_header,
@@ -103,6 +103,10 @@ def refresh_predictions():
 def get_mininet_evidence():
     if not MININET_RESULTS_PATH.exists():
         return None
+    try:
+        return json.loads(MININET_RESULTS_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
 
 
 @st.cache_data
@@ -113,8 +117,14 @@ def get_lte_pattern_report():
         return json.loads(PHASE7_REPORT_PATH.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
+
+
+@st.cache_data
+def get_phase8_evaluation():
+    if not PHASE8_REPORT_PATH.exists():
+        return None
     try:
-        return json.loads(MININET_RESULTS_PATH.read_text(encoding="utf-8"))
+        return json.loads(PHASE8_REPORT_PATH.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
 
@@ -688,6 +698,20 @@ with t_compare:
         "Run all **six routing algorithms** (three traditional and three risk-aware) simultaneously "
         "and compare their paths, distances, risk levels, and execution times."
     )
+
+    final_evaluation = get_phase8_evaluation()
+    if final_evaluation:
+        headline = final_evaluation["headline"]
+        verification = final_evaluation["verification"]
+        e1, e2, e3, e4 = st.columns(4)
+        e1.metric("Held-out LTE F1", f"{headline['held_out_cell_f1']:.3f}")
+        e2.metric("Held-out ROC-AUC", f"{headline['held_out_cell_roc_auc']:.3f}")
+        e3.metric("Mininet throughput", f"+{headline['mininet_throughput_gain_percent']:.1f}%")
+        e4.metric("Evidence checks", f"{verification['passed']}/{verification['total']}")
+        st.caption(
+            "Held-out-cell model evidence and controlled Mininet measurements are separate. "
+            "The LTE-to-link mapping is a deterministic integration demonstration, not a physical topology."
+        )
 
     if not st.session_state.model:
         st.warning("Train the legacy model in Risk Intelligence to populate synthetic risk scores.")

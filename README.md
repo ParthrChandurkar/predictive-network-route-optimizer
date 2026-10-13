@@ -71,7 +71,9 @@ Phase 6 dashboard modernization is complete: the Streamlit interface now uses a 
 
 Phase 7 pattern discovery is complete. After removing 103 exact duplicates, unusual labels remain broadly distributed across 33 cells and show only modest hour-of-day variation. A shallow rule model discovered patterns on one set of cells and validated them on disjoint cells. Its strongest signature—`mean_ue_ul > 0.0100` and `<= 1.0110`—covered 1,231 validation observations with 100% unusual-label precision and 40.6% recall coverage. That unusually sharp boundary is treated as a possible measurement-quantization or label-construction artifact, not a physical failure mechanism. Full cell, time, KPI-shift, uncertainty, and held-out-rule evidence is stored in `reports/phase7_lte_patterns.json`.
 
-The remaining roadmap has two milestones. Phase 8 will consolidate evaluation, reproducibility, documentation, and the final end-to-end demonstration. Phase 9 will add a Next.js public project story and browser-based route simulation deployed on Vercel, with the Python Streamlit research dashboard hosted separately and linked from the public site; the browser simulation will not be presented as a live Mininet run.
+Phase 8 final integration and evaluation is complete. A single reproducible command now validates evidence continuity across Phases 1-7, checks all six routing variants on the same degraded-link scenario, runs an LTE-score-to-route integration demonstration, verifies the saved model hash, and consolidates the held-out LTE, pattern, Mininet, and observability results. All seven evidence checks pass. The generated artifact is `reports/phase8_final_evaluation.json`; its evidence classes deliberately keep held-out data, synthetic mapping, and controlled emulation claims separate. See [`docs/phase8-evaluation.md`](docs/phase8-evaluation.md) for the workflow and claim boundaries.
+
+The remaining roadmap has one milestone. Phase 9 will add a Next.js public project story and browser-based route simulation deployed on Vercel, with the Python Streamlit research dashboard hosted separately and linked from the public site; the browser simulation will not be presented as a live Mininet run.
 
 On Windows, install the emulation dependencies in the existing WSL2 Ubuntu distribution from PowerShell:
 
@@ -168,12 +170,13 @@ python -m telemetry.prepare_lte
 python -m modeling.lte_evaluation
 python -m modeling.lte_model
 python -m analysis.lte_patterns
+python -m evaluation.phase8
 python -m experiments.mininet_plan
 python -m experiments.mininet_runner reports/phase4_mininet_plan.json --dry-run
 python scripts/emit_observability_demo.py
 ```
 
-The tests cover dataset reproducibility, telemetry validation, leakage-safe LTE features, held-out-cell pattern discovery, model persistence, topology mutation, routing consistency, failed-link exclusion, simulation restoration, dashboard state, and the opt-in observability boundary.
+The tests cover dataset reproducibility, telemetry validation, leakage-safe LTE features, held-out-cell pattern discovery, model persistence, final evidence consolidation, topology mutation, routing consistency, failed-link exclusion, simulation restoration, dashboard state, and the opt-in observability boundary.
 
 ## Current Version Limitations
 
