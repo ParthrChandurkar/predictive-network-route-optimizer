@@ -201,3 +201,67 @@ def lte_degradation_timeline(frame, scored=None):
         **_base(),
     )
     return fig
+
+
+def pattern_rate_figure(records, category: str, title: str, baseline_rate: float):
+    """Visualize grouped unusual-label rates from the Phase 7 evidence report."""
+    labels = [str(item[category]) for item in records]
+    rates = [item["unusual_rate"] * 100 for item in records]
+    low = [item["wilson_95_low"] * 100 for item in records]
+    high = [item["wilson_95_high"] * 100 for item in records]
+    fig = go.Figure(
+        go.Bar(
+            x=labels,
+            y=rates,
+            marker_color="#22d3ee",
+            error_y=dict(
+                type="data",
+                symmetric=False,
+                array=[upper - rate for upper, rate in zip(high, rates)],
+                arrayminus=[rate - lower for rate, lower in zip(rates, low)],
+                color="#64748b",
+                thickness=1,
+            ),
+            hovertemplate="%{x}<br>Unusual rate: %{y:.2f}%<extra></extra>",
+        )
+    )
+    fig.add_hline(
+        y=baseline_rate * 100,
+        line_dash="dash",
+        line_color="#fbbf24",
+        annotation_text="dataset baseline",
+    )
+    fig.update_layout(
+        title=title,
+        height=350,
+        xaxis=dict(title=category.replace("_", " ").title(), tickangle=-35),
+        yaxis=dict(title="Unusual-label rate (%)", gridcolor=GRID, rangemode="tozero"),
+        **_base(),
+    )
+    return fig
+
+
+def feature_shift_figure(records):
+    """Plot standardized marginal KPI shifts without implying causality."""
+    ordered = sorted(records, key=lambda item: item["standardized_mean_difference"])
+    fig = go.Figure(
+        go.Bar(
+            x=[item["standardized_mean_difference"] for item in ordered],
+            y=[item["feature"] for item in ordered],
+            orientation="h",
+            marker_color=[
+                "#fb7185" if item["standardized_mean_difference"] < 0 else "#34d399"
+                for item in ordered
+            ],
+            hovertemplate="%{y}<br>Standardized difference: %{x:.3f}<extra></extra>",
+        )
+    )
+    fig.add_vline(x=0, line_color="#64748b")
+    fig.update_layout(
+        title="Marginal KPI shift · unusual minus normal",
+        height=420,
+        xaxis=dict(title="Standardized mean difference", gridcolor=GRID),
+        yaxis=dict(title=""),
+        **_base(),
+    )
+    return fig

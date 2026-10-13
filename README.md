@@ -1,6 +1,6 @@
 # Predictive Network Route Optimizer
 
-A Streamlit application for comparing conventional shortest-path routing with ML-assisted, risk-aware routing. The current version combines NetworkX graph algorithms, synthetic network telemetry, a Random Forest baseline, stress simulation, and Plotly visualizations.
+A network experimentation platform for comparing conventional shortest-path routing with degradation-aware alternatives. The current version combines real LTE unusual-behavior telemetry, leakage-aware modeling, NetworkX routing, controlled Mininet experiments, OpenTelemetry observability, and a Streamlit network-operations dashboard.
 
 > **Rebuild in progress:** The project is being redesigned around real network telemetry and time-aware degradation prediction. The existing synthetic workflow remains available as a reproducible demonstration while the new data pipeline is developed.
 
@@ -22,6 +22,8 @@ A higher penalty makes the routing algorithms prefer lower-risk links, even when
 - Traffic, latency, packet-loss, and random-failure simulation
 - Traditional and failure-aware path comparison
 - Route risk, model metric, feature importance, and network-health charts
+- Held-out-cell LTE pattern discovery with explicit artifact and causality warnings
+- OpenTelemetry traces in Jaeger and application metrics in Prometheus
 
 ## Architecture
 
@@ -66,6 +68,10 @@ Phase 4 Mininet experimentation is complete. A controlled eight-router experimen
 Phase 5 observability is complete: routing, LTE inference, and Mininet measurements have opt-in OpenTelemetry instrumentation. A local OpenTelemetry Collector sends traces to Jaeger and exposes metrics for Prometheus. This makes route decisions and experimental performance inspectable without claiming that the demo stack is a production monitoring deployment.
 
 Phase 6 dashboard modernization is complete: the Streamlit interface now uses a responsive network-operations layout with live fabric status, severity-aware link inventory, clearer risk provenance, route recommendations, a recurring LTE time-slot signal, Mininet evidence, observability access, and dedicated control-plane workflows. The presentation remains a research dashboard rather than a production NOC product.
+
+Phase 7 pattern discovery is complete. After removing 103 exact duplicates, unusual labels remain broadly distributed across 33 cells and show only modest hour-of-day variation. A shallow rule model discovered patterns on one set of cells and validated them on disjoint cells. Its strongest signature—`mean_ue_ul > 0.0100` and `<= 1.0110`—covered 1,231 validation observations with 100% unusual-label precision and 40.6% recall coverage. That unusually sharp boundary is treated as a possible measurement-quantization or label-construction artifact, not a physical failure mechanism. Full cell, time, KPI-shift, uncertainty, and held-out-rule evidence is stored in `reports/phase7_lte_patterns.json`.
+
+The remaining roadmap has two milestones. Phase 8 will consolidate evaluation, reproducibility, documentation, and the final end-to-end demonstration. Phase 9 will add a Next.js public project story and browser-based route simulation deployed on Vercel, with the Python Streamlit research dashboard hosted separately and linked from the public site; the browser simulation will not be presented as a live Mininet run.
 
 On Windows, install the emulation dependencies in the existing WSL2 Ubuntu distribution from PowerShell:
 
@@ -161,18 +167,20 @@ python baseline.py
 python -m telemetry.prepare_lte
 python -m modeling.lte_evaluation
 python -m modeling.lte_model
+python -m analysis.lte_patterns
 python -m experiments.mininet_plan
 python -m experiments.mininet_runner reports/phase4_mininet_plan.json --dry-run
 python scripts/emit_observability_demo.py
 ```
 
-The tests cover dataset reproducibility, telemetry validation, leakage-safe LTE features, model persistence, topology mutation, routing consistency, failed-link exclusion, simulation restoration, and the opt-in observability boundary.
+The tests cover dataset reproducibility, telemetry validation, leakage-safe LTE features, held-out-cell pattern discovery, model persistence, topology mutation, routing consistency, failed-link exclusion, simulation restoration, dashboard state, and the opt-in observability boundary.
 
 ## Current Version Limitations
 
 - The dashboard can apply LTE degradation scores to route comparison, but its cell-to-link mapping is only a deterministic demonstration.
 - LTE labels indicate unusual behavior, not confirmed physical link failures.
 - The LTE data contains time of day but no calendar date, preventing a provably chronological split.
+- The strongest interpretable pattern uses a narrow KPI boundary that may reflect data construction or measurement quantization.
 - The LTE cell-to-link mapping is experimental because the source dataset provides no physical topology.
 - The application does not ingest SNMP, NetFlow, router logs, or streaming telemetry.
 - Model predictions support route comparison but do not configure real network devices.

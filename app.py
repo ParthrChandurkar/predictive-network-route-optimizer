@@ -24,12 +24,14 @@ from simulation      import (apply_stress, apply_random_failures,
                               restore_all_failures, network_health, snapshot, restore)
 from analytics       import (network_figure, confusion_matrix_fig, feature_importance_fig,
                               route_comparison_fig, health_gauge, risk_pie,
-                              lte_degradation_timeline)
+                              lte_degradation_timeline, pattern_rate_figure,
+                              feature_shift_figure)
 from telemetry       import TelemetryValidationError, load_lte_dataset
 from modeling.lte_model import load_lte_risk_model, predict_lte_risk
 from integration     import (apply_cell_risk_to_graph, build_demo_edge_cell_mapping,
                              cell_risk_snapshot)
-from settings        import MININET_RESULTS_PATH, PHASE2_REPORT_PATH
+from settings        import (MININET_RESULTS_PATH, PHASE2_REPORT_PATH,
+                             PHASE7_REPORT_PATH)
 from utils           import RISK_COLORS
 from observability   import configure_observability
 from ui              import (apply_dashboard_theme, render_app_header,
@@ -101,6 +103,16 @@ def refresh_predictions():
 def get_mininet_evidence():
     if not MININET_RESULTS_PATH.exists():
         return None
+
+
+@st.cache_data
+def get_lte_pattern_report():
+    if not PHASE7_REPORT_PATH.exists():
+        return None
+    try:
+        return json.loads(PHASE7_REPORT_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
     try:
         return json.loads(MININET_RESULTS_PATH.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -148,9 +160,9 @@ with st.sidebar:
 
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-(t_overview, t_model, t_builder, t_routing,
+(t_overview, t_model, t_patterns, t_builder, t_routing,
  t_compare, t_sim, t_analytics) = st.tabs([
-    "Network Ops", "Risk Intelligence", "Topology", "Route Control",
+    "Network Ops", "Risk Intelligence", "Pattern Discovery", "Topology", "Route Control",
     "Benchmarks", "Failure Lab", "Insights"
 ])
 
@@ -381,7 +393,108 @@ with t_model:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 3 — NETWORK BUILDER
+# TAB 3 — LTE PATTERN DISCOVERY
+# ══════════════════════════════════════════════════════════════════════════════
+with t_patterns:
+    render_section_header(st, "LTE evidence", "Validated unusual-behavior patterns")
+    st.markdown(
+        "This analysis separates **where and when labels occur** from the multivariate KPI "
+        "signatures that predict them. Rules are discovered on one set of cells and checked "
+        "on disjoint cells."
+    )
+    pattern_report = get_lte_pattern_report()
+    if pattern_report is None:
+        st.info("Generate the evidence report with `python -m analysis.lte_patterns`.")
+    else:
+        dataset = pattern_report["dataset"]
+        findings = pattern_report["headline_findings"]
+        rule_evidence = pattern_report["validated_interpretable_rules"]
+        top_rule = findings["dominant_validated_signature"]
+
+        pc1, pc2, pc3, pc4 = st.columns(4)
+        pc1.metric("Analyzed rows", f"{dataset['deduplicated_rows']:,}")
+        pc2.metric("Unusual labels", f"{dataset['unusual_rate'] * 100:.1f}%")
+        pc3.metric("Rule precision", f"{top_rule['validation_unusual_rate'] * 100:.1f}%")
+        pc4.metric("Rule coverage", f"{top_rule['validation_unusual_coverage'] * 100:.1f}%")
+
+        st.warning(
+            "The strongest cross-cell signature is a narrow measurement band. Its very high "
+            "precision may indicate KPI quantization or label construction—not a physical "
+            "network mechanism."
+        )
+        render_section_header(st, "Strongest held-out signature", "Interpretable rule")
+        st.code(top_rule["rule"], language=None)
+        render_status_panel(st, [
+            ("Validation cells", str(len(rule_evidence["validation_cells"]))),
+            ("Validation observations", f"{top_rule['validation_observations']:,}"),
+            ("Unusual-label lift", f"{top_rule['validation_lift']:.2f}×"),
+            ("Shallow-tree ROC-AUC", f"{rule_evidence['validation_metrics']['roc_auc']:.3f}"),
+        ])
+
+        spatial_col, temporal_col = st.columns(2)
+        with spatial_col:
+            st.plotly_chart(
+                pattern_rate_figure(
+                    pattern_report["cell_patterns"],
+                    "cell_id",
+                    "Unusual-label rate by LTE cell",
+                    dataset["unusual_rate"],
+                ),
+                width="stretch",
+                key="pattern_cells",
+            )
+        with temporal_col:
+            hourly = sorted(pattern_report["hour_patterns"], key=lambda item: item["hour"])
+            st.plotly_chart(
+                pattern_rate_figure(
+                    hourly,
+                    "hour",
+                    "Unusual-label rate by hour of day",
+                    dataset["unusual_rate"],
+                ),
+                width="stretch",
+                key="pattern_hours",
+            )
+
+        st.caption(
+            f"Cell-rate spread: {findings['cell_rate_spread_points']:.1f} percentage points · "
+            f"hour-rate spread: {findings['hour_rate_spread_points']:.1f} points. "
+            "The evidence does not show a small set of dominant cell or hourly hotspots."
+        )
+        shift_col, rules_col = st.columns([1.2, 1])
+        with shift_col:
+            st.plotly_chart(
+                feature_shift_figure(pattern_report["feature_shifts"]),
+                width="stretch",
+                key="pattern_feature_shifts",
+            )
+        with rules_col:
+            render_section_header(st, "Held-out cells", "High-lift rule evidence")
+            rules_frame = pd.DataFrame(rule_evidence["high_lift_rules"])
+            st.dataframe(
+                rules_frame[[
+                    "rule",
+                    "validation_observations",
+                    "validation_unusual_rate",
+                    "validation_lift",
+                    "validation_unusual_coverage",
+                ]],
+                width="stretch",
+                hide_index=True,
+                column_config={
+                    "validation_unusual_rate": st.column_config.NumberColumn("Precision", format="%.3f"),
+                    "validation_lift": st.column_config.NumberColumn("Lift", format="%.2f×"),
+                    "validation_unusual_coverage": st.column_config.NumberColumn("Coverage", format="%.3f"),
+                },
+            )
+            st.caption(
+                "Rules are predictive associations. They must not be presented as causal "
+                "failure mechanisms without independent operational evidence."
+            )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TAB 4 — NETWORK BUILDER
 # ══════════════════════════════════════════════════════════════════════════════
 with t_builder:
     render_section_header(st, "Topology management", "Network fabric configuration")
