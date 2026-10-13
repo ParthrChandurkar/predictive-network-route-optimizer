@@ -1,10 +1,18 @@
 # Predictive Network Degradation & Route Optimizer
 
+[![CI](https://github.com/ParthrChandurkar/predictive-network-route-optimizer/actions/workflows/ci.yml/badge.svg)](https://github.com/ParthrChandurkar/predictive-network-route-optimizer/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/ParthrChandurkar/predictive-network-route-optimizer)](https://github.com/ParthrChandurkar/predictive-network-route-optimizer/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-48e5b5.svg)](LICENSE)
+
 An evidence-led research system that learns unusual LTE behavior from real telemetry, converts degradation scores into routing costs, and tests risk-aware paths under controlled network impairment.
 
-[View the landing page](https://predictive-network-route-optimizer.vercel.app) · [Inspect the final evaluation](reports/phase8_final_evaluation.json) · [Review the Mininet measurements](reports/phase4_mininet_results.json)
+[View the landing page](https://predictive-network-route-optimizer.vercel.app) · [Try the browser demo](https://predictive-network-route-optimizer.vercel.app/demo) · [Inspect the final evaluation](reports/phase8_final_evaluation.json)
 
 > The public Next.js site explains the project and includes a guided route-decision demo. The Streamlit application is the complete simulation and network-operations dashboard. Streamlit is currently run locally; the website does not pretend that the full dashboard is hosted.
+
+## Project status
+
+**v1.0 complete.** The data pipeline, held-out evaluation, pattern analysis, routing integration, Mininet experiment, observability stack, Streamlit dashboard, public web experience, automated tests, and release documentation are implemented. Future work is optional extension rather than unfinished core functionality.
 
 ## What the project delivers
 
@@ -80,6 +88,8 @@ python -m streamlit run app.py
 ```
 
 On Linux or macOS, activate with `source .venv/bin/activate`. The dashboard opens at `http://localhost:8501` and works with the bundled synthetic baseline. LTE upload/scoring panels require the prepared data and model artifacts described below.
+
+To publish the dashboard, follow [`docs/streamlit-deployment.md`](docs/streamlit-deployment.md). Streamlit Community Cloud requires the repository owner to connect GitHub, so that final account-level step is intentionally manual.
 
 ## Prepare the LTE dataset
 
@@ -170,6 +180,8 @@ npm test
 npm run build
 ```
 
+The same checks run automatically on every push and pull request through [GitHub Actions](.github/workflows/ci.yml). The v1.0 release evidence is recorded in [`reports/phase10_release.json`](reports/phase10_release.json).
+
 ## Repository map
 
 | Path | Responsibility |
@@ -184,6 +196,7 @@ npm run build
 | `observability/`, `compose.observability.yaml` | OTel Collector, Jaeger, and Prometheus stack |
 | `evaluation/`, `reports/` | Cross-phase validation and committed evidence |
 | `web/` | Vercel-hosted Next.js landing page |
+| `.github/workflows/ci.yml` | Python and Next.js continuous integration |
 | `tests/` | Unit and dashboard regression tests |
 
 ## Claim boundaries
@@ -197,4 +210,4 @@ npm run build
 
 ## License
 
-No license file is currently included. Add one before redistributing or using the project commercially.
+Released under the [MIT License](LICENSE).

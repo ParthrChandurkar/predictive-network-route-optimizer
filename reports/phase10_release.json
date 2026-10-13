@@ -1,0 +1,26 @@
+{
+  "phase": "phase-10-release-and-portfolio-readiness",
+  "status": "complete",
+  "release": "v1.0.0",
+  "completed_at": "2026-10-13",
+  "deliverables": [
+    "GitHub Actions CI for Python and Next.js",
+    "reproducible direct dependency pins",
+    "Streamlit Community Cloud deployment guide",
+    "MIT license",
+    "completed README and v1.0.0 release notes",
+    "live Vercel landing page and guided browser demo"
+  ],
+  "verification": {
+    "python_tests": 56,
+    "browser_route_tests": 3,
+    "typescript": "passed",
+    "nextjs_production_build": "passed",
+    "streamlit_app_tabs": 8,
+    "streamlit_critical_interactions": 4,
+    "public_landing_http_status": 200,
+    "public_demo_http_status": 200
+  },
+  "manual_external_step": "Connect the repository to Streamlit Community Cloud, then set NEXT_PUBLIC_STREAMLIT_URL in Vercel.",
+  "claim_boundaries_source": "reports/phase8_final_evaluation.json"
+}
