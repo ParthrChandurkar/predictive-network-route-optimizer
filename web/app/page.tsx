@@ -27,13 +27,26 @@ const dashboardTabs = [
   ["08", "Insights", "Review telemetry, observability endpoints, evidence, and system-wide summaries."],
 ];
 
+const technologyStack = [
+  ["Python", "Coordinates telemetry preparation, model inference, routing, experiments, and evaluation."],
+  ["Pandas + NumPy", "Validate LTE CSV files, engineer KPI features, and summarize degradation signals."],
+  ["scikit-learn", "Train and evaluate the leakage-aware Random Forest degradation classifier."],
+  ["NetworkX", "Represent the topology and calculate conventional and risk-weighted paths."],
+  ["Streamlit", "Deliver the complete interactive dashboard, controls, charts, and simulation workflows."],
+  ["Mininet", "Emulate the eight-router network and measure RTT, loss, and TCP throughput."],
+  ["OpenTelemetry", "Instrument route decisions, LTE inference, and emulator trials."],
+  ["Jaeger", "Inspect distributed traces exported through the OpenTelemetry Collector."],
+  ["Prometheus", "Collect and query application and experiment metrics."],
+  ["Next.js + Vercel", "Present the project story and guided browser demo as a public website."],
+];
+
 export default function Home() {
   return (
     <main>
       <nav className="site-nav" aria-label="Primary navigation">
         <a className="brand" href="#top" aria-label="NetRoute Intelligence home"><span className="brand-mark">N</span><span>NetRoute <b>Intelligence</b></span></a>
-        <div className="nav-links"><a href="#system">System</a><a href="#evidence">Evidence</a><a href="#dashboard">Dashboard</a></div>
-        <a className="nav-cta" href="/demo">Open live demo <span>→</span></a>
+        <div className="nav-links"><a href="#overview">Overview</a><a href="#stack">Stack &amp; Data</a><a href="/demo">Demo Simulation</a></div>
+        <a className="nav-cta" href={githubUrl} target="_blank" rel="noreferrer">View source <span>↗</span></a>
       </nav>
 
       <section className="hero section-shell" id="top">
@@ -57,10 +70,19 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="about-section section-shell" aria-labelledby="about-title">
+        <span className="kicker">ABOUT</span>
+        <p id="about-title">NetRoute Intelligence combines real LTE degradation signals with graph-based routing to show when the shortest path is not the safest path. It turns the full workflow into a transparent, testable network simulation.</p>
+      </section>
+
       <section className="metric-band" id="evidence"><div className="section-shell metric-grid">{metrics.map((metric) => <article key={metric.label}><strong>{metric.value}</strong><div><b>{metric.label}</b><span>{metric.context}</span></div></article>)}</div></section>
 
-      <section className="story-section section-shell" id="system">
-        <div className="section-heading"><div><span className="kicker">THE SYSTEM</span><h2>From noisy telemetry<br />to a testable route decision.</h2></div><p>The project does not claim production automation. It creates a reproducible laboratory for discovering degradation patterns and asking whether a risk-aware route performs better under controlled failure conditions.</p></div>
+      <section className="story-section section-shell" id="overview">
+        <div className="section-heading"><div><span className="kicker">OVERVIEW</span><h2>From noisy telemetry<br />to a testable route decision.</h2></div><p>The project does not claim production automation. It provides a reproducible environment for detecting degradation and testing whether a risk-aware route performs better under controlled network impairment.</p></div>
+        <div className="problem-solution">
+          <article><span>01 / PROBLEM</span><h3>Shortest does not always mean reliable.</h3><p>Conventional routing can keep selecting a low-distance link even when telemetry shows congestion, latency, loss, or unusual cellular behavior.</p></article>
+          <article className="solution"><span>02 / SOLUTION</span><h3>Make degradation part of the path cost.</h3><p>The system scores network risk, adds an adjustable penalty to affected links, compares alternative routes, and validates the outcome with controlled traffic.</p></article>
+        </div>
         <div className="stage-grid">{stages.map((stage) => <article key={stage.number}><span>{stage.number}</span><div className="stage-icon"><i /><i /><i /></div><h3>{stage.title}</h3><p>{stage.copy}</p></article>)}</div>
       </section>
 
@@ -73,6 +95,18 @@ export default function Home() {
             <div className="arch-row"><div className="arch-node"><small>POLICY</small><b>Graph reweighting</b><span>Distance + risk × penalty</span></div><i>→</i><div className="arch-node accent"><small>OUTPUT</small><b>Safer route</b><span>Decision + provenance</span></div></div>
             <div className="observability-rail"><b>OpenTelemetry</b><span>traces</span><span>metrics</span><span>Jaeger</span><span>Prometheus</span></div>
           </div>
+        </div>
+      </section>
+
+      <section className="stack-detail-section" id="stack">
+        <div className="section-shell">
+          <div className="section-heading"><div><span className="kicker">STACK &amp; DATA</span><h2>Every tool has<br />a specific job.</h2></div><p>The system separates data preparation, prediction, route calculation, emulation, observability, and presentation so every result can be traced to the component that produced it.</p></div>
+          <article className="dataset-card">
+            <div><span>DATASET / KAGGLE</span><h3>Anomaly Detection in 4G Cellular Networks</h3><p>36,904 labeled training observations and 9,158 test observations across 33 LTE cells, sampled in 15-minute time slots.</p></div>
+            <div className="dataset-facts"><span><b>14</b> normalized input fields</span><span><b>27.6%</b> unusual-label rate</span><span><b>33</b> shared cells</span></div>
+            <a href="https://www.kaggle.com/competitions/anomaly-detection-in-4g-cellular-networks" target="_blank" rel="noreferrer">View dataset ↗</a>
+          </article>
+          <div className="technology-grid">{technologyStack.map(([tool, purpose], index) => <article key={tool}><span>{String(index + 1).padStart(2, "0")}</span><div><h3>{tool}</h3><p>{purpose}</p></div></article>)}</div>
         </div>
       </section>
 
@@ -106,8 +140,6 @@ export default function Home() {
           <article><div className="finding-index">03 / EMULATION</div><h3>Latency improved. Loss did not.</h3><p>Risk-aware routing reduced mean RTT by 66.6%, while mean packet loss stayed unchanged at 13.3%.</p></article>
         </div>
       </section>
-
-      <section className="stack-section"><div className="section-shell stack-inner"><span className="kicker">BUILT WITH OPEN TOOLS</span><div className="stack-list">{["Python","NetworkX","scikit-learn","Mininet","OpenTelemetry","Jaeger","Prometheus","Streamlit","Next.js"].map((tool) => <span key={tool}>{tool}</span>)}</div></div></section>
 
       <section className="cta-section section-shell"><div><span className="kicker">EXPLORE THE SYSTEM</span><h2>Try the decision.<br />Then inspect the evidence.</h2></div><div className="cta-actions"><a className="button primary" href="/demo">Open live demo <span>→</span></a><a className="button secondary" href={dashboardUrl} target="_blank" rel="noreferrer">{hasHostedDashboard ? "Launch dashboard" : "Clone & run Streamlit"} <span>↗</span></a></div></section>
 

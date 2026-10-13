@@ -87,7 +87,7 @@ python -m pip install -r requirements.txt
 python -m streamlit run app.py
 ```
 
-On Linux or macOS, activate with `source .venv/bin/activate`. The dashboard opens at `http://localhost:8501` and works with the bundled synthetic baseline. LTE upload/scoring panels require the prepared data and model artifacts described below.
+On Linux or macOS, activate with `source .venv/bin/activate`. The dashboard opens at `http://localhost:8501` and generates a deterministic synthetic fallback in memory, so no legacy model files are required. LTE upload/scoring panels require the prepared data and model artifacts described below.
 
 To publish the dashboard, follow [`docs/streamlit-deployment.md`](docs/streamlit-deployment.md). Streamlit Community Cloud requires the repository owner to connect GitHub, so that final account-level step is intentionally manual.
 

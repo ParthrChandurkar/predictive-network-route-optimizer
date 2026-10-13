@@ -8,12 +8,14 @@
     "framework": "Next.js 16.4.0",
     "runtime": "React 19.3.0",
     "source_directory": "web",
-    "deployment_id": "dpl_9PN7VQ16ikGuCDcQTkiXDyYNjJn5",
+    "deployment_id": "dpl_Vd7d2GnDGPPk5vHN25NTFiZ8CFHN",
     "responsibility": "Public project presentation and bounded route-decision demo; the complete network simulation remains in Streamlit.",
     "experience": [
       "evidence-led project landing page",
       "responsive network-operations visual system",
       "guided client-side route decision demo",
+      "three-part navigation for overview, stack and data, and demo simulation",
+      "tool-by-tool implementation map and LTE dataset profile",
       "static preview of the eight Streamlit workflows",
       "clear links to source and dashboard setup",
       "explicit held-out, integration-demo, and Mininet claim boundaries"

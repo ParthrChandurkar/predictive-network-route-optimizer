@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-from data_generator  import save_dataset
+from data_generator  import generate_network_dataset, save_dataset
 from model           import train_model, load_model, predict_link, predict_graph_edges
 from network_builder import (build_default_topology, add_router, remove_router,
                               add_link, remove_link, update_link, set_link_failed,
@@ -74,6 +74,8 @@ if st.session_state.G is None:
     st.session_state.G = build_default_topology()
 if st.session_state.model is None:
     m, s = load_model()
+    if m is None:
+        m, s, _ = train_model(generate_network_dataset(), persist=False)
     st.session_state.model  = m
     st.session_state.scaler = s
 

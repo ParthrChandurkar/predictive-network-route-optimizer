@@ -8,9 +8,9 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 
-DATASET_PATH = PROJECT_ROOT / "network_data.csv"
-MODEL_PATH = PROJECT_ROOT / "failure_model.pkl"
-SCALER_PATH = PROJECT_ROOT / "failure_scaler.pkl"
+DATASET_PATH = PROJECT_ROOT / "artifacts" / "synthetic_network_data.csv"
+MODEL_PATH = PROJECT_ROOT / "artifacts" / "synthetic_failure_model.pkl"
+SCALER_PATH = PROJECT_ROOT / "artifacts" / "synthetic_failure_scaler.pkl"
 
 LTE_RAW_DIR = PROJECT_ROOT / "data" / "raw" / "lte"
 LTE_TRAIN_RAW_PATH = LTE_RAW_DIR / "ML-MATT-CompetitionQT2021_train.csv"
